@@ -1,15 +1,16 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
     ArrowLeft, Play, BookOpen, Clock, CheckCircle2, Circle, Lock,
     BarChart3, Flame, Calendar, Target, Sparkles, Trophy, Trash2,
-    Settings
+    Settings, Download, Loader2, Award, X, ChevronRight, RotateCcw
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/utils/api';
+import { generateTopicPdf } from '@/utils/generatePdf';
 
 export default function SubjectDetailPage() {
     const params = useParams();
@@ -18,6 +19,17 @@ export default function SubjectDetailPage() {
     const [subject, setSubject] = useState(null);
     const [mounted, setMounted] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [pdfLoading, setPdfLoading] = useState(null); // null or topic ID
+
+    // Exam Prep state
+    const [examOpen, setExamOpen] = useState(false);
+    const [examLoading, setExamLoading] = useState(false);
+    const [examQuestions, setExamQuestions] = useState([]);
+    const [examIdx, setExamIdx] = useState(0);
+    const [examSelected, setExamSelected] = useState(null);
+    const [examAnswered, setExamAnswered] = useState(false);
+    const [examResults, setExamResults] = useState([]); // { selected, correct, isCorrect }
+    const [examFinished, setExamFinished] = useState(false);
 
 
 
@@ -63,6 +75,7 @@ export default function SubjectDetailPage() {
         () => topics.filter(t => t.passed).length,
         [topics]
     );
+    const allTopicsComplete = topics.length > 0 && completedCount === topics.length;
     const remainingCount = topics.length - completedCount;
 
     // Calculate days left based on created_at + duration
@@ -88,6 +101,78 @@ export default function SubjectDetailPage() {
     const colors = subject
         ? accentColors[Math.abs(subject.id?.charCodeAt(0) || 0) % accentColors.length]
         : accentColors[0];
+
+    // Page title
+    useEffect(() => {
+        if (subject?.name) document.title = `${subject.name} – AuraLab`;
+        return () => { document.title = 'AuraLab – AI-Powered Learning Assistant'; };
+    }, [subject?.name]);
+
+    // PDF Download for any topic (browser print – supports all languages)
+    const handleDownloadPDF = useCallback(async (topic) => {
+        if (pdfLoading) return;
+        if (!topic) return;
+        setPdfLoading(topic.id);
+        try {
+            await generateTopicPdf({
+                topicId: topic.id,
+                topicTitle: topic.title,
+                subjectName: subject?.name || 'Subject',
+                langName: subject?.language || 'English',
+            });
+        } catch (err) {
+            console.error('PDF generation failed:', err);
+        } finally {
+            setPdfLoading(null);
+        }
+    }, [pdfLoading, subject]);
+
+    // Exam Prep handlers
+    const startExam = useCallback(async () => {
+        if (!allTopicsComplete || examLoading) return;
+        setExamLoading(true);
+        setExamOpen(true);
+        setExamIdx(0);
+        setExamSelected(null);
+        setExamAnswered(false);
+        setExamResults([]);
+        setExamFinished(false);
+        try {
+            const langName = subject?.language || 'English';
+            const data = await apiFetch(`/api/content/exam/${subject.id}?lang=${langName}`);
+            setExamQuestions(Array.isArray(data) ? data : []);
+        } catch (err) {
+            console.error('Exam prep failed:', err);
+            setExamQuestions([]);
+        } finally {
+            setExamLoading(false);
+        }
+    }, [allTopicsComplete, examLoading, subject]);
+
+    const handleExamAnswer = () => {
+        if (examSelected === null || examAnswered) return;
+        const q = examQuestions[examIdx];
+        setExamAnswered(true);
+        setExamResults(prev => [...prev, {
+            selected: examSelected,
+            correct: q.correct_index,
+            isCorrect: examSelected === q.correct_index,
+        }]);
+    };
+
+    const handleExamNext = () => {
+        if (examIdx + 1 >= examQuestions.length) {
+            setExamFinished(true);
+        } else {
+            setExamIdx(prev => prev + 1);
+            setExamSelected(null);
+            setExamAnswered(false);
+        }
+    };
+
+    const examScore = examResults.filter(r => r.isCorrect).length;
+    const examTotal = examQuestions.length;
+    const examPassed = examTotal > 0 && (examScore / examTotal) >= 0.6;
 
     if (!mounted || !subject) return null;
 
@@ -341,6 +426,32 @@ export default function SubjectDetailPage() {
                                 <BookOpen size={20} />
                                 Homework
                             </button>
+                            <button
+                                onClick={startExam}
+                                disabled={!allTopicsComplete || examLoading}
+                                title={allTopicsComplete ? 'Take the final exam' : 'Complete all topics to unlock Exam Prep'}
+                                style={{
+                                    padding: '14px 28px',
+                                    fontSize: '1rem',
+                                    fontWeight: 700,
+                                    borderRadius: 'var(--radius-md)',
+                                    border: allTopicsComplete ? 'none' : `2px solid var(--border-color)`,
+                                    background: allTopicsComplete
+                                        ? `linear-gradient(135deg, #f59e0b, #f97316)`
+                                        : 'var(--bg-secondary)',
+                                    color: allTopicsComplete ? '#fff' : 'var(--text-muted)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 10,
+                                    cursor: allTopicsComplete ? 'pointer' : 'not-allowed',
+                                    transition: 'all 0.2s ease',
+                                    opacity: allTopicsComplete ? 1 : 0.6,
+                                    boxShadow: allTopicsComplete ? '0 4px 20px rgba(245,158,11,0.3)' : 'none',
+                                }}
+                            >
+                                {examLoading ? <Loader2 size={20} style={{ animation: 'spin 0.8s linear infinite' }} /> : <Award size={20} />}
+                                {allTopicsComplete ? 'Exam Prep' : <><Lock size={14} /> Exam Prep</>}
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -499,6 +610,28 @@ export default function SubjectDetailPage() {
                                         }}>{topic.title}</span>
                                     </div>
 
+                                    {/* PDF Download Button (for passed or current topics) */}
+                                    {(passed || isCurrent) && (
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); handleDownloadPDF(topic); }}
+                                            disabled={!!pdfLoading}
+                                            title={`Download ${topic.title} as PDF`}
+                                            style={{
+                                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                                width: 30, height: 30, borderRadius: 8,
+                                                border: '1px solid var(--border-color)',
+                                                background: pdfLoading === topic.id ? 'var(--bg-secondary)' : 'transparent',
+                                                color: pdfLoading === topic.id ? 'var(--text-muted)' : 'var(--text-secondary)',
+                                                cursor: pdfLoading ? 'not-allowed' : 'pointer',
+                                                transition: 'all 0.2s', flexShrink: 0, padding: 0,
+                                            }}
+                                        >
+                                            {pdfLoading === topic.id
+                                                ? <Loader2 size={14} style={{ animation: 'spin 0.8s linear infinite' }} />
+                                                : <Download size={14} />}
+                                        </button>
+                                    )}
+
                                     {/* Status Badge */}
                                     {passed && (
                                         <span style={{
@@ -554,6 +687,323 @@ export default function SubjectDetailPage() {
                 )}
             </main>
 
+            {/* ── Exam Prep Overlay ── */}
+            {examOpen && (
+                <div style={{
+                    position: 'fixed', inset: 0, zIndex: 9999,
+                    background: 'var(--bg-primary)',
+                    overflowY: 'auto',
+                }}>
+                    {/* Top Bar */}
+                    <div style={{
+                        position: 'sticky', top: 0, zIndex: 10,
+                        background: 'var(--bg-primary)',
+                        borderBottom: '1px solid var(--border-color)',
+                        padding: '16px 24px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                            <Award size={22} style={{ color: '#f59e0b' }} />
+                            <span style={{ fontWeight: 700, fontSize: '1.125rem', color: 'var(--text-primary)' }}>
+                                Exam Prep — {subject.name}
+                            </span>
+                        </div>
+                        <button
+                            onClick={() => setExamOpen(false)}
+                            style={{
+                                background: 'var(--bg-secondary)', border: '1px solid var(--border-color)',
+                                borderRadius: 8, width: 36, height: 36, display: 'flex',
+                                alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+                                color: 'var(--text-secondary)',
+                            }}
+                        >
+                            <X size={18} />
+                        </button>
+                    </div>
+
+                    <div style={{ maxWidth: 720, margin: '0 auto', padding: '32px 24px 80px' }}>
+
+                        {/* Loading State */}
+                        {examLoading && (
+                            <div style={{ textAlign: 'center', padding: '80px 0' }}>
+                                <Loader2 size={40} style={{ color: '#f59e0b', animation: 'spin 1s linear infinite', margin: '0 auto 16px' }} />
+                                <p style={{ fontSize: '1.125rem', fontWeight: 600, color: 'var(--text-primary)', marginBottom: 6 }}>
+                                    Generating Exam...
+                                </p>
+                                <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+                                    Creating {topics.length}-topic comprehensive MCQs with explanations
+                                </p>
+                            </div>
+                        )}
+
+                        {/* No Questions */}
+                        {!examLoading && examQuestions.length === 0 && (
+                            <div style={{ textAlign: 'center', padding: '80px 0' }}>
+                                <p style={{ fontSize: '1rem', color: 'var(--text-secondary)' }}>Failed to load exam questions. Please try again.</p>
+                                <button onClick={startExam} style={{
+                                    marginTop: 16, padding: '10px 24px', borderRadius: 8,
+                                    background: 'linear-gradient(135deg, #f59e0b, #f97316)', color: '#fff',
+                                    fontWeight: 600, border: 'none', cursor: 'pointer',
+                                }}>Retry</button>
+                            </div>
+                        )}
+
+                        {/* Exam Finished — Results */}
+                        {!examLoading && examFinished && examQuestions.length > 0 && (
+                            <div>
+                                {/* Score Card */}
+                                <div style={{
+                                    textAlign: 'center', padding: '40px 32px',
+                                    borderRadius: 16, marginBottom: 32,
+                                    background: examPassed
+                                        ? 'linear-gradient(135deg, rgba(16,185,129,0.08), rgba(16,185,129,0.02))'
+                                        : 'linear-gradient(135deg, rgba(239,68,68,0.08), rgba(239,68,68,0.02))',
+                                    border: `1px solid ${examPassed ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)'}`,
+                                }}>
+                                    <div style={{ fontSize: '3rem', marginBottom: 8 }}>{examPassed ? '🎉' : '📚'}</div>
+                                    <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: 6 }}>
+                                        {examPassed ? 'Congratulations! You Passed!' : 'Keep Studying!'}
+                                    </h2>
+                                    <p style={{ fontSize: '1rem', color: 'var(--text-secondary)', marginBottom: 20 }}>
+                                        {examPassed
+                                            ? `You scored ${examScore}/${examTotal} — great mastery of ${subject.name}!`
+                                            : `You scored ${examScore}/${examTotal}. Review the explanations below and try again.`}
+                                    </p>
+                                    <div style={{
+                                        display: 'inline-flex', alignItems: 'center', gap: 8,
+                                        background: 'var(--bg-primary)', padding: '10px 24px', borderRadius: 12,
+                                        border: '1px solid var(--border-color)',
+                                    }}>
+                                        <span style={{ fontSize: '2rem', fontWeight: 800, color: examPassed ? '#10b981' : '#ef4444' }}>
+                                            {Math.round((examScore / examTotal) * 100)}%
+                                        </span>
+                                        <span style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>Score</span>
+                                    </div>
+                                </div>
+
+                                {/* Action Buttons */}
+                                <div style={{ display: 'flex', gap: 12, justifyContent: 'center', marginBottom: 32 }}>
+                                    <button onClick={startExam} style={{
+                                        padding: '12px 24px', borderRadius: 10,
+                                        background: 'linear-gradient(135deg, #f59e0b, #f97316)', color: '#fff',
+                                        fontWeight: 700, border: 'none', cursor: 'pointer',
+                                        display: 'flex', alignItems: 'center', gap: 8,
+                                    }}><RotateCcw size={16} /> Retake Exam</button>
+                                    <button onClick={() => setExamOpen(false)} style={{
+                                        padding: '12px 24px', borderRadius: 10,
+                                        background: 'var(--bg-secondary)', color: 'var(--text-primary)',
+                                        fontWeight: 600, border: '1px solid var(--border-color)', cursor: 'pointer',
+                                    }}>Close</button>
+                                </div>
+
+                                {/* Review all questions */}
+                                <h3 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: 16, color: 'var(--text-primary)' }}>
+                                    Review Answers
+                                </h3>
+                                {examQuestions.map((q, qi) => {
+                                    const r = examResults[qi];
+                                    return (
+                                        <div key={qi} style={{
+                                            marginBottom: 20, padding: '20px',
+                                            borderRadius: 12,
+                                            border: `1px solid ${r?.isCorrect ? 'rgba(16,185,129,0.2)' : 'rgba(239,68,68,0.2)'}`,
+                                            background: r?.isCorrect ? 'rgba(16,185,129,0.03)' : 'rgba(239,68,68,0.03)',
+                                        }}>
+                                            <div style={{ display: 'flex', gap: 8, alignItems: 'flex-start', marginBottom: 10 }}>
+                                                <span style={{
+                                                    width: 24, height: 24, borderRadius: '50%',
+                                                    background: r?.isCorrect ? '#10b981' : '#ef4444',
+                                                    color: '#fff', fontSize: '0.75rem', fontWeight: 700,
+                                                    display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                                                }}>{qi + 1}</span>
+                                                <span style={{ fontWeight: 600, color: 'var(--text-primary)', lineHeight: 1.5 }}>{q.question}</span>
+                                            </div>
+                                            {q.topic && (
+                                                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 8, paddingLeft: 32 }}>Topic: {q.topic}</div>
+                                            )}
+                                            <div style={{ display: 'grid', gap: 6, paddingLeft: 32 }}>
+                                                {q.options.map((opt, oi) => {
+                                                    const isCorrect = oi === q.correct_index;
+                                                    const isUserPick = oi === r?.selected;
+                                                    return (
+                                                        <div key={oi} style={{
+                                                            padding: '8px 12px', borderRadius: 8, fontSize: '0.875rem',
+                                                            border: `1px solid ${isCorrect ? '#10b981' : isUserPick ? '#ef4444' : 'var(--border-color)'}`,
+                                                            background: isCorrect ? 'rgba(16,185,129,0.08)' : isUserPick ? 'rgba(239,68,68,0.08)' : 'transparent',
+                                                            color: isCorrect ? '#10b981' : isUserPick ? '#ef4444' : 'var(--text-secondary)',
+                                                            fontWeight: isCorrect || isUserPick ? 600 : 400,
+                                                            display: 'flex', alignItems: 'center', gap: 8,
+                                                        }}>
+                                                            {isCorrect ? <CheckCircle2 size={14} /> : isUserPick ? <X size={14} /> : <Circle size={12} />}
+                                                            {opt}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                            {q.explanation && (
+                                                <div style={{
+                                                    marginTop: 10, paddingLeft: 32, fontSize: '0.8125rem',
+                                                    color: 'var(--text-secondary)', lineHeight: 1.6,
+                                                    borderLeft: '3px solid #f59e0b40', paddingLeft: 14,
+                                                    marginLeft: 32, fontStyle: 'italic',
+                                                }}>
+                                                    💡 {q.explanation}
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        )}
+
+                        {/* Active Question */}
+                        {!examLoading && !examFinished && examQuestions.length > 0 && (() => {
+                            const q = examQuestions[examIdx];
+                            const progressPct = ((examIdx + 1) / examTotal) * 100;
+                            return (
+                                <div>
+                                    {/* Progress */}
+                                    <div style={{ marginBottom: 24 }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
+                                            <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+                                                Question {examIdx + 1} of {examTotal}
+                                            </span>
+                                            <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: '#f59e0b' }}>
+                                                {Math.round(progressPct)}%
+                                            </span>
+                                        </div>
+                                        <div style={{
+                                            height: 6, borderRadius: 3,
+                                            background: 'var(--bg-secondary)',
+                                        }}>
+                                            <div style={{
+                                                height: '100%', borderRadius: 3,
+                                                background: 'linear-gradient(90deg, #f59e0b, #f97316)',
+                                                width: `${progressPct}%`,
+                                                transition: 'width 0.3s ease',
+                                            }} />
+                                        </div>
+                                    </div>
+
+                                    {/* Topic Tag */}
+                                    {q.topic && (
+                                        <div style={{
+                                            display: 'inline-block', fontSize: '0.75rem', fontWeight: 600,
+                                            color: '#f59e0b', background: 'rgba(245,158,11,0.1)',
+                                            padding: '3px 10px', borderRadius: 8, marginBottom: 14,
+                                        }}>{q.topic}</div>
+                                    )}
+
+                                    {/* Question */}
+                                    <h2 style={{
+                                        fontSize: '1.125rem', fontWeight: 700, lineHeight: 1.6,
+                                        color: 'var(--text-primary)', marginBottom: 20,
+                                    }}>{q.question}</h2>
+
+                                    {/* Options */}
+                                    <div style={{ display: 'grid', gap: 10, marginBottom: 24 }}>
+                                        {q.options.map((opt, oi) => {
+                                            const isSelected = examSelected === oi;
+                                            const isCorrect = oi === q.correct_index;
+                                            let bg = 'var(--bg-primary)';
+                                            let border = isSelected ? `${colors[0]}` : 'var(--border-color)';
+                                            let color = 'var(--text-primary)';
+
+                                            if (examAnswered) {
+                                                if (isCorrect) {
+                                                    bg = 'rgba(16,185,129,0.08)';
+                                                    border = '#10b981';
+                                                    color = '#10b981';
+                                                } else if (isSelected) {
+                                                    bg = 'rgba(239,68,68,0.08)';
+                                                    border = '#ef4444';
+                                                    color = '#ef4444';
+                                                }
+                                            }
+
+                                            return (
+                                                <button
+                                                    key={oi}
+                                                    onClick={() => !examAnswered && setExamSelected(oi)}
+                                                    disabled={examAnswered}
+                                                    style={{
+                                                        padding: '14px 16px', borderRadius: 10,
+                                                        border: `2px solid ${border}`,
+                                                        background: bg, color,
+                                                        textAlign: 'left', cursor: examAnswered ? 'default' : 'pointer',
+                                                        display: 'flex', alignItems: 'center', gap: 12,
+                                                        fontSize: '0.9375rem', fontWeight: isSelected || (examAnswered && isCorrect) ? 600 : 400,
+                                                        transition: 'all 0.15s ease',
+                                                    }}
+                                                >
+                                                    <span style={{
+                                                        width: 28, height: 28, borderRadius: '50%',
+                                                        border: `2px solid ${border}`, display: 'flex',
+                                                        alignItems: 'center', justifyContent: 'center',
+                                                        fontSize: '0.75rem', fontWeight: 700, flexShrink: 0,
+                                                        background: (isSelected && !examAnswered) ? `${colors[0]}15` : 'transparent',
+                                                    }}>
+                                                        {examAnswered && isCorrect ? <CheckCircle2 size={16} /> :
+                                                            examAnswered && isSelected ? <X size={16} /> :
+                                                                String.fromCharCode(65 + oi)}
+                                                    </span>
+                                                    {opt}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+
+                                    {/* Explanation (shows after answering) */}
+                                    {examAnswered && q.explanation && (
+                                        <div style={{
+                                            padding: '16px 18px', borderRadius: 12, marginBottom: 20,
+                                            background: 'rgba(245,158,11,0.06)',
+                                            border: '1px solid rgba(245,158,11,0.15)',
+                                        }}>
+                                            <div style={{ fontWeight: 700, fontSize: '0.8125rem', color: '#f59e0b', marginBottom: 6 }}>💡 Explanation</div>
+                                            <p style={{ fontSize: '0.875rem', lineHeight: 1.7, color: 'var(--text-secondary)' }}>{q.explanation}</p>
+                                        </div>
+                                    )}
+
+                                    {/* Action Buttons */}
+                                    <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+                                        {!examAnswered ? (
+                                            <button
+                                                onClick={handleExamAnswer}
+                                                disabled={examSelected === null}
+                                                style={{
+                                                    padding: '12px 32px', borderRadius: 10,
+                                                    background: examSelected !== null
+                                                        ? 'linear-gradient(135deg, #f59e0b, #f97316)'
+                                                        : 'var(--bg-secondary)',
+                                                    color: examSelected !== null ? '#fff' : 'var(--text-muted)',
+                                                    fontWeight: 700, border: 'none',
+                                                    cursor: examSelected !== null ? 'pointer' : 'not-allowed',
+                                                    fontSize: '0.9375rem',
+                                                }}
+                                            >Check Answer</button>
+                                        ) : (
+                                            <button
+                                                onClick={handleExamNext}
+                                                style={{
+                                                    padding: '12px 32px', borderRadius: 10,
+                                                    background: 'linear-gradient(135deg, #f59e0b, #f97316)',
+                                                    color: '#fff', fontWeight: 700, border: 'none',
+                                                    cursor: 'pointer', fontSize: '0.9375rem',
+                                                    display: 'flex', alignItems: 'center', gap: 8,
+                                                }}
+                                            >
+                                                {examIdx + 1 >= examTotal ? 'See Results' : 'Next'}
+                                                <ChevronRight size={18} />
+                                            </button>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })()}
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

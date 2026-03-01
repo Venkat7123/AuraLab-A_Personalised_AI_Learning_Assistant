@@ -48,6 +48,7 @@ export default function DashboardPage() {
     };
 
     useEffect(() => {
+        document.title = 'Dashboard – AuraLab';
         if (!authLoading && !user) {
             router.push('/login');
             return;

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import {
     ArrowLeft, ArrowRight, Check, BookOpen, Target, Clock,
     BarChart3, Zap, Upload, Sparkles, GripVertical, Pencil, Trash2,
-    Plus, Languages
+    Plus, Languages, Loader2
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import { useAuth } from '@/context/AuthContext';
@@ -50,10 +50,12 @@ export default function AddSubjectPage() {
     const [pdfFile, setPdfFile] = useState(null);
     const [uploading, setUploading] = useState(false);
     const [uploadError, setUploadError] = useState('');
+    const [saving, setSaving] = useState(false);
     const fileInputRef = useRef(null);
     const { user, loading: authLoading } = useAuth();
 
     useEffect(() => {
+        document.title = 'Add Subject – AuraLab';
         if (!authLoading && !user) {
             router.push('/login');
             return;
@@ -123,6 +125,8 @@ export default function AddSubjectPage() {
     };
 
     const handleSave = async () => {
+        if (saving) return;
+        setSaving(true);
         const subject = {
             name: form.name,
             need: form.need,
@@ -142,6 +146,7 @@ export default function AddSubjectPage() {
         } catch (error) {
             console.error('Failed to save subject:', error);
             alert('Failed to save subject. Please try again.');
+            setSaving(false);
         }
     };
 
@@ -944,10 +949,18 @@ export default function AddSubjectPage() {
                         <button
                             className="btn-primary"
                             onClick={handleSave}
-                            style={{ padding: '12px 32px' }}
+                            disabled={saving}
+                            style={{
+                                padding: '12px 32px',
+                                opacity: saving ? 0.6 : 1,
+                                cursor: saving ? 'not-allowed' : 'pointer',
+                            }}
                         >
-                            <Sparkles size={16} />
-                            Create Subject
+                            {saving ? (
+                                <><Loader2 size={16} style={{ animation: 'spin 0.8s linear infinite' }} /> Creating...</>
+                            ) : (
+                                <><Sparkles size={16} /> Create Subject</>
+                            )}
                         </button>
                     )}
                 </div>

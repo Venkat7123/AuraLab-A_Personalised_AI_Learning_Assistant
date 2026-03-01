@@ -28,6 +28,7 @@ export default function ProfilePage() {
     const [toast, setToast] = useState(null); // { type: 'success'|'error', text: '' }
 
     useEffect(() => {
+        document.title = 'Profile – AuraLab';
         if (!user) { router.push('/login'); return; }
         setFormData(prev => ({
             ...prev,

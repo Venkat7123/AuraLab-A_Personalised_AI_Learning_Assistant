@@ -15,6 +15,7 @@ export default function SignupPage() {
     const [success, setSuccess] = useState(false);
 
     useEffect(() => {
+        document.title = 'Sign Up – AuraLab';
         if (!authLoading && user) {
             router.replace('/dashboard');
         }

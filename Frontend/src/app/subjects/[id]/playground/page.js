@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, PanelLeftClose, PanelRightClose, ChevronRight, BookOpen } from 'lucide-react';
+import { ArrowLeft, PanelLeftClose, PanelRightClose, ChevronRight, BookOpen, Languages, Download } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 
 const LANG_CODE_MAP = {
@@ -27,6 +27,8 @@ export default function PlaygroundPage() {
     const [activeMode, setActiveMode] = useState('explain');
     const [mounted, setMounted] = useState(false);
     const [language, setLanguage] = useState('en');
+    const [pdfLoading, setPdfLoading] = useState(false);
+    const centerPanelRef = useRef(null);
 
     // Panel widths (percentages)
     const [leftWidth, setLeftWidth] = useState(20);
@@ -150,9 +152,17 @@ export default function PlaygroundPage() {
         setActiveMode('explain');
     }, []);
 
+    // Dynamic page title
+    const currentTopic = subject?.topics?.[currentTopicIdx]?.title || 'Getting Started';
+    useEffect(() => {
+        if (subject?.name) {
+            document.title = `${currentTopic} – ${subject.name} – AuraLab`;
+        }
+        return () => { document.title = 'AuraLab – AI-Powered Learning Assistant'; };
+    }, [currentTopic, subject?.name]);
+
     if (!mounted || !subject) return null;
 
-    const currentTopic = subject.topics?.[currentTopicIdx]?.title || 'Getting Started';
     const progress = Math.round(((subject.topics || []).filter(t => t.passed).length / (subject.topics?.length || 1)) * 100);
 
     // ─── Mobile Layout ─────────────────
@@ -184,7 +194,7 @@ export default function PlaygroundPage() {
                 </div>
                 <div style={{ height: 'calc(100vh - 64px - 48px)' }}>
                     {mobilePanel === 'left' && <LeftPanel subject={subject} currentTopicIdx={currentTopicIdx} onSelectTopic={handleSelectTopic} />}
-                    {mobilePanel === 'center' && <CenterPanel subject={subject} currentTopicIdx={currentTopicIdx} activeMode={activeMode} setActiveMode={setActiveMode} onQuizPass={handleQuizPass} language={language} languageName={LANG_NAME_MAP[language] || 'English'} />}
+                    {mobilePanel === 'center' && <CenterPanel ref={centerPanelRef} subject={subject} currentTopicIdx={currentTopicIdx} activeMode={activeMode} setActiveMode={setActiveMode} onQuizPass={handleQuizPass} language={language} languageName={LANG_NAME_MAP[language] || 'English'} onPdfLoadingChange={setPdfLoading} />}
                     {mobilePanel === 'right' && <RightPanel subject={subject} currentTopic={currentTopic} activeMode={activeMode} language={language} languageName={LANG_NAME_MAP[language] || 'English'} />}
                 </div>
             </div>
@@ -238,6 +248,59 @@ export default function PlaygroundPage() {
                 {/* Right side controls */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
 
+                    {/* Language Selector */}
+                    <div style={{ position: 'relative', flexShrink: 0 }}>
+                        <select
+                            value={language}
+                            onChange={e => setLanguage(e.target.value)}
+                            style={{
+                                appearance: 'none', WebkitAppearance: 'none',
+                                padding: '5px 28px 5px 30px',
+                                borderRadius: 20,
+                                border: '1px solid var(--border-color)',
+                                background: 'var(--bg-secondary)',
+                                color: 'var(--text-primary)',
+                                fontSize: '0.75rem', fontWeight: 600,
+                                cursor: 'pointer', outline: 'none',
+                            }}
+                        >
+                            <option value="en">English</option>
+                            <option value="ta">Tamil</option>
+                            <option value="hi">Hindi</option>
+                            <option value="kn">Kannada</option>
+                            <option value="te">Telugu</option>
+                        </select>
+                        <Languages size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--accent)', pointerEvents: 'none' }} />
+                        <ChevronRight size={11} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%) rotate(90deg)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
+                    </div>
+
+                    {/* PDF Download */}
+                    <button
+                        onClick={() => centerPanelRef.current?.handleDownloadPDF?.()}
+                        disabled={pdfLoading}
+                        title="Download topic content as PDF"
+                        style={{
+                            display: 'flex', alignItems: 'center', gap: 5,
+                            padding: '5px 12px', borderRadius: 20,
+                            fontSize: '0.75rem', fontWeight: 600,
+                            border: '1px solid var(--border-color)',
+                            cursor: pdfLoading ? 'not-allowed' : 'pointer',
+                            background: pdfLoading ? 'var(--bg-secondary)' : 'rgba(99,102,241,0.06)',
+                            color: pdfLoading ? 'var(--text-muted)' : 'var(--accent)',
+                            transition: 'all 0.2s', flexShrink: 0,
+                        }}
+                    >
+                        {pdfLoading ? (
+                            <div style={{ width: 13, height: 13, border: '2px solid var(--border-color)', borderTopColor: 'var(--accent)', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                        ) : (
+                            <Download size={13} />
+                        )}
+                        PDF
+                    </button>
+
+                    {/* Divider */}
+                    <div style={{ width: 1, height: 22, background: 'var(--border-color)' }} />
+
                     {/* Progress pill */}
                     <div style={{
                         display: 'flex', alignItems: 'center', gap: 8,
@@ -255,8 +318,6 @@ export default function PlaygroundPage() {
                         </div>
                         <span style={{ fontSize: '0.6875rem', fontWeight: 700, color: 'var(--accent)', minWidth: 28, textAlign: 'right' }}>{progress}%</span>
                     </div>
-
-
 
                     {/* Divider */}
                     <div style={{ width: 1, height: 22, background: 'var(--border-color)' }} />
@@ -294,9 +355,9 @@ export default function PlaygroundPage() {
 
                 {/* Center */}
                 <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
-                    <CenterPanel subject={subject} currentTopicIdx={currentTopicIdx}
+                    <CenterPanel ref={centerPanelRef} subject={subject} currentTopicIdx={currentTopicIdx}
                         activeMode={activeMode} setActiveMode={setActiveMode} onQuizPass={handleQuizPass}
-                        language={language} languageName={LANG_NAME_MAP[language] || 'English'} />
+                        language={language} languageName={LANG_NAME_MAP[language] || 'English'} onPdfLoadingChange={setPdfLoading} />
                 </div>
 
                 {/* Right */}

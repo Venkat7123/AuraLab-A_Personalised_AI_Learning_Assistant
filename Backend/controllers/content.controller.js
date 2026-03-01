@@ -72,3 +72,32 @@ export const saveQuizResult = async (req, res, next) => {
         next(err)
     }
 }
+
+// GET /api/content/exam/:subjectId — Get exam prep questions
+export const getExamPrep = async (req, res, next) => {
+    try {
+        const { subjectId } = req.params
+        const lang = req.query.lang || 'English'
+
+        // Get subject info
+        const { data: subject, error: subjectErr } = await req.supabase
+            .from('subjects')
+            .select('id, name, language')
+            .eq('id', subjectId)
+            .single()
+
+        if (subjectErr || !subject) {
+            return res.status(404).json({ error: 'Subject not found' })
+        }
+
+        const questions = await contentService.getExamQuestions(req.supabase, {
+            subjectId,
+            subjectName: subject.name,
+            language: lang || subject.language || 'English'
+        })
+
+        res.json(questions)
+    } catch (err) {
+        next(err)
+    }
+}

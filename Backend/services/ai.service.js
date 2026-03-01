@@ -2,8 +2,34 @@ import { GoogleGenerativeAI } from "@google/generative-ai"
 
 // Key1 → content creation & syllabus generation
 const genAI1 = new GoogleGenerativeAI(process.env.GEMINI_API_KEY1)
-// Key2 → chat & homework scanning
+// Key2 → chat & homework scanning (now also used as fallback)
 const genAI2 = new GoogleGenerativeAI(process.env.GEMINI_API_KEY2)
+
+// Helper for artificial delay
+const delay = (ms) => new Promise(res => setTimeout(res, ms))
+
+// Generic wrapper to handle rate limits (429) & server errors (503) with automatic key rotation
+const callGeminiWithFallback = async (modelOptions, generationFn) => {
+  try {
+    const model1 = genAI1.getGenerativeModel(modelOptions)
+    return await generationFn(model1)
+  } catch (err) {
+    const errMsg = err.message || ''
+    // If it's a quota/rate limit error, try the fallback key
+    if (errMsg.includes('429') || errMsg.includes('Too Many Requests') || errMsg.includes('quota') || errMsg.includes('503')) {
+      console.warn(`⚠️ Gemini API Key 1 hit quota/error (${errMsg}). Switching to Key 2 fallback...`)
+      await delay(2000) // Brief pause before retry
+      try {
+        const model2 = genAI2.getGenerativeModel(modelOptions)
+        return await generationFn(model2)
+      } catch (fallbackErr) {
+        console.error('❌ Both Gemini API keys failed:', fallbackErr.message)
+        throw new Error(`AI Generation failed (Both keys exhausted). Error: ${fallbackErr.message}`)
+      }
+    }
+    throw err
+  }
+}
 
 export const generateSyllabus = async ({
   name,
@@ -15,7 +41,6 @@ export const generateSyllabus = async ({
 }) => {
 
   const lang = language || 'English'
-  const model = genAI1.getGenerativeModel({ model: "gemini-2.5-flash" })
 
   const prompt = `
 You are an expert curriculum designer.
@@ -43,7 +68,10 @@ Rules:
 ]
 `
 
-  const result = await model.generateContent(prompt)
+  const result = await callGeminiWithFallback(
+    { model: "gemini-2.5-flash" },
+    (model) => model.generateContent(prompt)
+  )
 
   const text = result.response.text()
 
@@ -63,7 +91,6 @@ Rules:
 
 export const generateTopicContent = async ({ topicTitle, subjectName, mode, language }) => {
   const lang = language || 'English'
-  const model = genAI1.getGenerativeModel({ model: "gemini-2.5-flash" })
 
   const modeInstructions = {
     explain: `Explain the topic "${topicTitle}" in detail as part of the subject "${subjectName}".
@@ -121,14 +148,16 @@ CRITICAL LANGUAGE RULES:
 Return ONLY the markdown content. No extra explanation or wrapping.
 `
 
-  const result = await model.generateContent(prompt)
+  const result = await callGeminiWithFallback(
+    { model: "gemini-2.5-flash" },
+    (model) => model.generateContent(prompt)
+  )
   return result.response.text()
 }
 
 
 export const generateQuizQuestions = async ({ topicTitle, subjectName, language }) => {
   const lang = language || 'English'
-  const model = genAI1.getGenerativeModel({ model: "gemini-2.5-flash" })
 
   const prompt = `
 You are an expert quiz creator.
@@ -160,7 +189,10 @@ Format:
 ]
 `
 
-  const result = await model.generateContent(prompt)
+  const result = await callGeminiWithFallback(
+    { model: "gemini-2.5-flash" },
+    (model) => model.generateContent(prompt)
+  )
   const text = result.response.text()
 
   const cleaned = text
@@ -180,11 +212,72 @@ Format:
 }
 
 
-export const generateSyllabusFromPDFText = async (text) => {
+export const generateExamQuestions = async ({ topicTitles, subjectName, language }) => {
+  const lang = language || 'English'
 
-  const model = genAI1.getGenerativeModel({
-    model: "gemini-2.5-flash"
-  })
+  const topicsList = topicTitles.map((t, i) => `${i + 1}. ${t}`).join('\n')
+
+  const prompt = `
+You are an expert exam creator.
+
+Create 20 multiple-choice questions for a comprehensive exam on:
+Subject: "${subjectName}"
+
+The exam should cover ALL of these topics:
+${topicsList}
+
+CRITICAL LANGUAGE RULES:
+- Write ALL questions, ALL options, and ALL explanations in ${lang} language
+- Use natural, casual, everyday spoken style of ${lang}
+- Technical terms can stay in English but everything else must be in ${lang}
+
+Rules:
+- Each question has exactly 4 options
+- Only 1 correct answer per question
+- Spread questions evenly across ALL topics
+- Mix easy, medium, and hard questions
+- Each question MUST have an "explanation" field that explains:
+  - WHY the correct answer is right
+  - WHY the other options are wrong (briefly)
+  - Keep explanations concise (2-3 sentences)
+- Return ONLY valid JSON, no explanation
+
+Format:
+[
+  {
+    "question": "Question text in ${lang}",
+    "options": ["Option A in ${lang}", "Option B in ${lang}", "Option C in ${lang}", "Option D in ${lang}"],
+    "correct_index": 0,
+    "explanation": "Explanation in ${lang} about why option A is correct and others are not.",
+    "topic": "Topic title this question is from"
+  }
+]
+`
+
+  const result = await callGeminiWithFallback(
+    { model: "gemini-2.5-flash" },
+    (model) => model.generateContent(prompt)
+  )
+  const text = result.response.text()
+
+  const cleaned = text
+    .replace(/```json/g, "")
+    .replace(/```/g, "")
+    .trim()
+
+  try {
+    const questions = JSON.parse(cleaned)
+    if (!Array.isArray(questions) || questions.length === 0) {
+      throw new Error("Empty exam array")
+    }
+    return questions
+  } catch (err) {
+    throw new Error("Gemini returned invalid JSON for exam questions")
+  }
+}
+
+
+export const generateSyllabusFromPDFText = async (text) => {
 
   // Trim large PDFs (important)
   const trimmedText = text.slice(0, 15000)
@@ -211,7 +304,10 @@ Content:
 ${trimmedText}
 `
 
-  const result = await model.generateContent(prompt)
+  const result = await callGeminiWithFallback(
+    { model: "gemini-2.5-flash" },
+    (model) => model.generateContent(prompt)
+  )
 
   const raw = result.response.text()
 
@@ -278,7 +374,10 @@ If it's a written question, provide a well-structured answer.
 Be encouraging and educational in your tone.${langInstruction}`
   }
 
-  const result = await model.generateContent([prompt, imagePart])
+  const result = await callGeminiWithFallback(
+    { model: "gemini-2.5-flash" },
+    (model) => model.generateContent([prompt, imagePart])
+  )
   return result.response.text()
 }
 
@@ -322,6 +421,9 @@ Rules:
   // Add current message
   contents.push({ role: 'user', parts: [{ text: message }] })
 
-  const result = await model.generateContent({ contents })
+  const result = await callGeminiWithFallback(
+    { model: "gemini-2.5-flash" },
+    (model) => model.generateContent({ contents })
+  )
   return result.response.text()
-}
+}

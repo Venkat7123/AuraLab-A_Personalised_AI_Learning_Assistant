@@ -4,10 +4,14 @@ import {
     getTopicContent,
     getQuizQuestions,
     generateTopicContent,
-    saveQuizResult
+    saveQuizResult,
+    getExamPrep
 } from '../controllers/content.controller.js'
 
 const router = express.Router()
+
+// Exam prep route (must come before /:topicId routes)
+router.get('/exam/:subjectId', authMiddleware, getExamPrep)
 
 // Quiz routes MUST come before /:mode to prevent "quiz" matching as a mode
 router.get('/:topicId/quiz', authMiddleware, getQuizQuestions)

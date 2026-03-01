@@ -75,6 +75,7 @@ export default function SettingsPage() {
                 setForm(formData);
                 setOriginal(formData);
                 setMounted(true);
+                document.title = `Settings – ${data.name || 'Subject'} – AuraLab`;
             } catch (error) {
                 console.error('Failed to fetch subject:', error);
                 router.push('/dashboard');

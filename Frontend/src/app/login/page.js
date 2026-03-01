@@ -14,6 +14,7 @@ export default function LoginPage() {
     const [error, setError] = useState('');
 
     useEffect(() => {
+        document.title = 'Login – AuraLab';
         if (!authLoading && user) {
             router.replace('/dashboard');
         }

@@ -11,6 +11,7 @@ import pdfRoutes from "./routes/pdf.routes.js"
 import scanRoutes from "./routes/scan.routes.js"
 import contentRoutes from "./routes/content.routes.js"
 import chatRoutes from "./routes/chat.routes.js"
+import imageRoutes from "./routes/image.routes.js"
 
 const app = express()
 
@@ -33,6 +34,7 @@ app.use("/api/pdf", pdfRoutes)
 app.use("/api/scan", scanRoutes)
 app.use("/api/content", contentRoutes)
 app.use("/api/chat", chatRoutes)
+app.use("/api/images", imageRoutes)
 // Health check
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }))
 

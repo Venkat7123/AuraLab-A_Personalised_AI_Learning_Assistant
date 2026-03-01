@@ -6,35 +6,34 @@ export const generateAndStoreTopicContent = async (supabase, { topicId, topicTit
     const lang = language || 'English'
     const modes = ['explain', 'demonstrate', 'try', 'apply']
 
-    // Generate content for all 4 modes in parallel
-    const contentPromises = modes.map(async (mode) => {
+    // Helper for artificial delay
+    const delay = (ms) => new Promise(res => setTimeout(res, ms))
+
+    // Generate content sequentially to respect Gemini API rate limits (15 RPM free tier)
+    const contentResults = []
+    for (const mode of modes) {
         try {
             const content = await aiService.generateTopicContent({
                 topicTitle, subjectName, mode, language: lang
             })
-            return { topic_id: topicId, mode, lang, content }
+            contentResults.push({ topic_id: topicId, mode, lang, content })
         } catch (err) {
             console.error(`Failed to generate ${mode} content for "${topicTitle}":`, err.message)
-            return { topic_id: topicId, mode, lang, content: `Content generation failed. Please try regenerating.` }
+            contentResults.push({ topic_id: topicId, mode, lang, content: `Content generation failed: ${err.message}` })
         }
-    })
+        await delay(2000) // 2s delay between mode generations
+    }
 
     // Generate quiz questions
-    const quizPromise = (async () => {
-        try {
-            return await aiService.generateQuizQuestions({
-                topicTitle, subjectName, language: lang
-            })
-        } catch (err) {
-            console.error(`Failed to generate quiz for "${topicTitle}":`, err.message)
-            return []
-        }
-    })()
-
-    const [contentResults, quizQuestions] = await Promise.all([
-        Promise.all(contentPromises),
-        quizPromise
-    ])
+    let quizQuestions = []
+    try {
+        quizQuestions = await aiService.generateQuizQuestions({
+            topicTitle, subjectName, language: lang
+        })
+    } catch (err) {
+        console.error(`Failed to generate quiz for "${topicTitle}":`, err.message)
+    }
+    await delay(2000) // 2s delay after quiz
 
     // Upsert content (unique constraint: topic_id, mode, lang)
     if (contentResults.length) {
@@ -89,6 +88,9 @@ export const generateContentForSubject = async (supabase, { subjectId, subjectNa
 
     console.log(`🚀 Starting content generation for ${topics.length} topics in "${subjectName}" (${language})`)
 
+    // Helper for artificial delay
+    const delay = (ms) => new Promise(res => setTimeout(res, ms))
+
     // Generate sequentially to avoid API rate limits
     for (const topic of topics) {
         try {
@@ -100,6 +102,7 @@ export const generateContentForSubject = async (supabase, { subjectId, subjectNa
                 userId
             })
             console.log(`✅ "${topic.title}" — ${result.contentCount} modes + ${result.quizCount} quiz questions`)
+            await delay(3000) // 3s delay between topics
         } catch (err) {
             console.error(`❌ Failed "${topic.title}":`, err.message)
         }
@@ -170,4 +173,31 @@ export const saveQuizResult = async (supabase, { userId, topicId, passed, score 
 
     if (error) throw error
     return data
+}
+
+// ── Generate exam prep questions (across all topics of a subject) ──
+export const getExamQuestions = async (supabase, { subjectId, subjectName, language }) => {
+    const lang = language || 'English'
+
+    // Get all topics for this subject
+    const { data: topics, error } = await supabase
+        .from('topics')
+        .select('id, title')
+        .eq('subject_id', subjectId)
+        .order('topic_order', { ascending: true })
+
+    if (error || !topics?.length) {
+        throw new Error('No topics found for this subject')
+    }
+
+    const topicTitles = topics.map(t => t.title)
+
+    // Generate fresh exam questions via AI
+    const questions = await aiService.generateExamQuestions({
+        topicTitles,
+        subjectName,
+        language: lang
+    })
+
+    return questions
 }

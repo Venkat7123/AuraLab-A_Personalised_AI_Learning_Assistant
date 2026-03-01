@@ -9,6 +9,8 @@ export default function LeftPanel({ subject, currentTopicIdx, onSelectTopic }) {
     const [libraryOpen, setLibraryOpen] = useState(false);
     const [scanImages, setScanImages] = useState([]);
     const [libraryLoading, setLibraryLoading] = useState(false);
+    const [generatedImages, setGeneratedImages] = useState([]);
+    const [lightboxImg, setLightboxImg] = useState(null);
 
     const topics = subject?.topics || [];
     const progress = useMemo(() => {
@@ -22,15 +24,18 @@ export default function LeftPanel({ subject, currentTopicIdx, onSelectTopic }) {
         [topics]
     );
 
-    // Fetch scan images for library when opened
+    // Fetch library items when opened
     useEffect(() => {
         if (!libraryOpen || !subject?.id) return;
         const fetchLibrary = async () => {
             setLibraryLoading(true);
             try {
-                const data = await apiFetch(`/api/scan/history/${subject.id}`);
-                const images = (data || []).filter(item => item.image_url);
-                setScanImages(images);
+                const [scanData, imgData] = await Promise.all([
+                    apiFetch(`/api/scan/history/${subject.id}`).catch(() => []),
+                    apiFetch(`/api/images/${subject.id}`).catch(() => []),
+                ]);
+                setScanImages((scanData || []).filter(item => item.image_url));
+                setGeneratedImages(imgData || []);
             } catch (err) {
                 console.error('Failed to fetch library:', err);
             } finally {
@@ -45,6 +50,26 @@ export default function LeftPanel({ subject, currentTopicIdx, onSelectTopic }) {
             height: '100%', display: 'flex', flexDirection: 'column',
             background: 'var(--bg-card)', overflowY: 'auto',
         }}>
+            {/* Lightbox Overlay */}
+            {lightboxImg && (
+                <div onClick={() => setLightboxImg(null)} style={{
+                    position: 'fixed', inset: 0, zIndex: 9999,
+                    background: 'rgba(0,0,0,0.85)', display: 'flex',
+                    alignItems: 'center', justifyContent: 'center', cursor: 'zoom-out',
+                }}>
+                    <img src={lightboxImg} alt="" style={{
+                        maxWidth: '90vw', maxHeight: '90vh', borderRadius: 12,
+                        boxShadow: '0 24px 80px rgba(0,0,0,0.5)',
+                    }} />
+                    <button onClick={() => setLightboxImg(null)} style={{
+                        position: 'absolute', top: 20, right: 20,
+                        width: 40, height: 40, borderRadius: '50%',
+                        background: 'rgba(255,255,255,0.15)', border: 'none',
+                        color: 'white', fontSize: '1.25rem', cursor: 'pointer',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>✕</button>
+                </div>
+            )}
             {/* Subject Header with Progress */}
             <div style={{
                 padding: '20px 18px 16px', borderBottom: '1px solid var(--border-color)',
@@ -184,12 +209,12 @@ export default function LeftPanel({ subject, currentTopicIdx, onSelectTopic }) {
                 >
                     {libraryOpen ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
                     Library
-                    {scanImages.length > 0 && (
+                    {(scanImages.length + generatedImages.length) > 0 && (
                         <span style={{
                             marginLeft: 'auto', fontSize: '0.625rem',
                             background: 'rgba(99,102,241,0.1)', color: 'var(--accent)',
                             padding: '2px 8px', borderRadius: 10, fontWeight: 700,
-                        }}>{scanImages.length}</span>
+                        }}>{scanImages.length + generatedImages.length}</span>
                     )}
                 </button>
 
@@ -199,45 +224,88 @@ export default function LeftPanel({ subject, currentTopicIdx, onSelectTopic }) {
                             <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', textAlign: 'center', padding: '16px 0' }}>
                                 Loading...
                             </p>
-                        ) : scanImages.length === 0 ? (
+                        ) : (scanImages.length === 0 && generatedImages.length === 0) ? (
                             <p style={{ color: 'var(--text-muted)', fontSize: '0.75rem', textAlign: 'center', padding: '16px 0' }}>
-                                No files yet. Upload homework scans to see them here.
+                                No files yet. Use infographic mode in chat to generate images!
                             </p>
                         ) : (
                             <>
-                                {/* Scan Images */}
-                                <div style={{
-                                    display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0 6px',
-                                    color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 700,
-                                    textTransform: 'uppercase', letterSpacing: '0.05em',
-                                }}>
-                                    <ImageIcon size={12} /> Scanned Images
-                                    <span style={{ marginLeft: 'auto', fontSize: '0.625rem', background: 'var(--bg-secondary)', padding: '2px 8px', borderRadius: 10 }}>
-                                        {scanImages.length}
-                                    </span>
-                                </div>
-                                <div style={{ display: 'grid', gap: 4, maxHeight: 200, overflowY: 'auto' }}>
-                                    {scanImages.map((item, i) => (
-                                        <a key={item.id || i} href={item.image_url} target="_blank" rel="noopener noreferrer"
-                                            style={{
-                                                display: 'flex', alignItems: 'center', gap: 8,
-                                                padding: '6px 8px', borderRadius: 'var(--radius-sm)',
-                                                background: 'var(--bg-secondary)',
-                                                color: 'var(--text-primary)', textDecoration: 'none',
-                                                fontSize: '0.75rem', transition: 'background 0.15s',
-                                            }}
-                                        >
-                                            <img src={item.image_url} alt="" style={{
-                                                width: 28, height: 28, borderRadius: 4, objectFit: 'cover',
-                                                border: '1px solid var(--border-color)',
-                                            }} />
-                                            <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                                                {item.text?.substring(0, 30) || `Scan ${i + 1}`}
+                                {/* Generated Infographics */}
+                                {generatedImages.length > 0 && (
+                                    <>
+                                        <div style={{
+                                            display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0 6px',
+                                            color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 700,
+                                            textTransform: 'uppercase', letterSpacing: '0.05em',
+                                        }}>
+                                            🎨 Infographics
+                                            <span style={{ marginLeft: 'auto', fontSize: '0.625rem', background: 'rgba(245,158,11,0.1)', color: '#f59e0b', padding: '2px 8px', borderRadius: 10 }}>
+                                                {generatedImages.length}
                                             </span>
-                                            <ExternalLink size={10} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
-                                        </a>
-                                    ))}
-                                </div>
+                                        </div>
+                                        <div style={{ display: 'grid', gap: 4, maxHeight: 200, overflowY: 'auto', marginBottom: 8 }}>
+                                            {generatedImages.map((item, i) => (
+                                                <div key={item.id || i} onClick={() => setLightboxImg(item.image_url)}
+                                                    style={{
+                                                        display: 'flex', alignItems: 'center', gap: 8,
+                                                        padding: '6px 8px', borderRadius: 'var(--radius-sm)',
+                                                        background: 'rgba(245,158,11,0.05)',
+                                                        border: '1px solid rgba(245,158,11,0.1)',
+                                                        color: 'var(--text-primary)', cursor: 'pointer',
+                                                        fontSize: '0.75rem', transition: 'background 0.15s',
+                                                    }}
+                                                >
+                                                    <img src={item.image_url} alt="" style={{
+                                                        width: 28, height: 28, borderRadius: 4, objectFit: 'cover',
+                                                        border: '1px solid var(--border-color)',
+                                                    }} />
+                                                    <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                        {item.prompt?.substring(0, 30) || `Image ${i + 1}`}
+                                                    </span>
+                                                    <ImageIcon size={10} style={{ color: '#f59e0b', flexShrink: 0 }} />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
+
+                                {/* Scan Images */}
+                                {scanImages.length > 0 && (
+                                    <>
+                                        <div style={{
+                                            display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0 6px',
+                                            color: 'var(--text-muted)', fontSize: '0.75rem', fontWeight: 700,
+                                            textTransform: 'uppercase', letterSpacing: '0.05em',
+                                        }}>
+                                            <ImageIcon size={12} /> Scanned Images
+                                            <span style={{ marginLeft: 'auto', fontSize: '0.625rem', background: 'var(--bg-secondary)', padding: '2px 8px', borderRadius: 10 }}>
+                                                {scanImages.length}
+                                            </span>
+                                        </div>
+                                        <div style={{ display: 'grid', gap: 4, maxHeight: 200, overflowY: 'auto' }}>
+                                            {scanImages.map((item, i) => (
+                                                <div key={item.id || i} onClick={() => setLightboxImg(item.image_url)}
+                                                    style={{
+                                                        display: 'flex', alignItems: 'center', gap: 8,
+                                                        padding: '6px 8px', borderRadius: 'var(--radius-sm)',
+                                                        background: 'var(--bg-secondary)',
+                                                        color: 'var(--text-primary)', cursor: 'pointer',
+                                                        fontSize: '0.75rem', transition: 'background 0.15s',
+                                                    }}
+                                                >
+                                                    <img src={item.image_url} alt="" style={{
+                                                        width: 28, height: 28, borderRadius: 4, objectFit: 'cover',
+                                                        border: '1px solid var(--border-color)',
+                                                    }} />
+                                                    <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                        {item.text?.substring(0, 30) || `Scan ${i + 1}`}
+                                                    </span>
+                                                    <ImageIcon size={10} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </>
+                                )}
                             </>
                         )}
                     </div>

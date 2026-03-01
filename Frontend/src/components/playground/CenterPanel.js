@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, forwardRef, useImperativeHandle } from 'react';
 import {
     BookOpen, Eye, Hand, ClipboardCheck, Globe2,
     ChevronRight, CheckCircle2, XCircle, Award,
     RotateCcw, Languages, Loader2, RefreshCw, Sparkles
 } from 'lucide-react';
 import { apiFetch } from '@/utils/api';
+import { generateTopicPdf } from '@/utils/generatePdf';
 
 const MODES_BASE = [
     { key: 'explain', icon: BookOpen, color: '#6366f1' },
@@ -118,7 +119,7 @@ const UI_TRANSLATIONS = {
     },
 };
 
-export default function CenterPanel({ subject, currentTopicIdx, activeMode, setActiveMode, onQuizPass, language = 'en', languageName = 'English' }) {
+const CenterPanel = forwardRef(function CenterPanel({ subject, currentTopicIdx, activeMode, setActiveMode, onQuizPass, language = 'en', languageName = 'English', onPdfLoadingChange }, ref) {
     const [content, setContent] = useState(null);
     const [contentLoading, setContentLoading] = useState(false);
     const [contentError, setContentError] = useState('');
@@ -140,6 +141,35 @@ export default function CenterPanel({ subject, currentTopicIdx, activeMode, setA
     const topicTitle = topic?.title || 'Getting Started';
     const topicId = topic?.id;
     const langName = languageName || LANG_NAME_FROM_CODE[language] || 'English';
+    const [pdfLoading, setPdfLoading] = useState(false);
+
+    // ── PDF Download (browser print – supports all languages) ──
+    const handleDownloadPDF = useCallback(async () => {
+        if (!topicId || pdfLoading) return;
+        setPdfLoading(true);
+        try {
+            await generateTopicPdf({
+                topicId,
+                topicTitle,
+                subjectName: subject?.name || 'Subject',
+                langName,
+            });
+        } catch (err) {
+            console.error('PDF generation failed:', err);
+        } finally {
+            setPdfLoading(false);
+        }
+    }, [topicId, topicTitle, subject, langName, pdfLoading]);
+
+    // Expose handleDownloadPDF to parent via ref
+    useImperativeHandle(ref, () => ({
+        handleDownloadPDF: () => handleDownloadPDF(),
+    }), [handleDownloadPDF]);
+
+    // Notify parent of pdfLoading state changes
+    useEffect(() => {
+        onPdfLoadingChange?.(pdfLoading);
+    }, [pdfLoading, onPdfLoadingChange]);
 
     // ── Fetch content when topic/mode/language changes ──
     useEffect(() => {
@@ -441,6 +471,8 @@ export default function CenterPanel({ subject, currentTopicIdx, activeMode, setA
                         </button>
                     );
                 })}
+
+
             </div>
 
             {/* Content Area */}
@@ -754,4 +786,6 @@ export default function CenterPanel({ subject, currentTopicIdx, activeMode, setA
             </div>
         </div>
     );
-}
+});
+
+export default CenterPanel;

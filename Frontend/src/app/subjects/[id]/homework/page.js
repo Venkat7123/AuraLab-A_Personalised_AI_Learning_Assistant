@@ -57,6 +57,7 @@ export default function HomeworkPage() {
                 const data = await apiFetch(`/api/subjects/${id}`);
                 setSubject(data);
                 setMounted(true);
+                document.title = `Homework – ${data?.name || 'Subject'} – AuraLab`;
             } catch {
                 router.push('/dashboard');
             }
