@@ -21,24 +21,31 @@ export default function RootLayout({ children }) {
     <html lang="en" className="dark">
       <body className={`${inter.variable} antialiased`} style={{ background: 'transparent' }}>
         <div style={{ position: 'fixed', inset: 0, width: '100vw', height: '100vh', pointerEvents: 'none', overflow: 'hidden', zIndex: -1 }}>
-          <video
-            autoPlay
-            loop
-            muted
-            playsInline
-            style={{
-              position: 'absolute',
-              top: '50%',
-              left: '50%',
-              transform: 'translate(-50%, -50%)',
-              minWidth: '100vw',
-              minHeight: '100vh',
-              objectFit: 'cover',
-              opacity: 1.0,
-            }}
-          >
-            <source src="https://videos.pexels.com/video-files/9665235/9665235-uhd_2560_1440_30fps.mp4" type="video/mp4" />
-          </video>
+          {/* Background Video */}
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            zIndex: -1,
+            background: '#0a0e1a',
+          }}>
+            <video
+              autoPlay
+              loop
+              muted
+              playsInline
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                opacity: 0.8,
+              }}
+            >
+              <source src="/bg-video.mp4" type="video/mp4" />
+            </video>
+          </div>
         </div>
         <AuthProvider>
           <ThemeProvider>

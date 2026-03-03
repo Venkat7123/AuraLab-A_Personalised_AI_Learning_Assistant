@@ -22,19 +22,24 @@ import { apiFetch } from '@/utils/api';
 function VideoBg() {
     return (
         <div style={{
-            position: 'fixed', inset: 0, width: '100vw', height: '100vh',
-            pointerEvents: 'none', overflow: 'hidden', zIndex: -1,
+            position: 'absolute',
+            inset: 0,
+            zIndex: 0,
+            background: '#0a0e1a',
         }}>
             <video
-                autoPlay loop muted playsInline
+                autoPlay
+                loop
+                muted
+                playsInline
                 style={{
-                    position: 'absolute', top: '50%', left: '50%',
-                    transform: 'translate(-50%, -50%)',
-                    minWidth: '100vw', minHeight: '100vh',
+                    width: '100%',
+                    height: '100%',
                     objectFit: 'cover',
+                    opacity: 0.8,
                 }}
             >
-                <source src="https://videos.pexels.com/video-files/9665235/9665235-uhd_2560_1440_30fps.mp4" type="video/mp4" />
+                <source src="/bg-video.mp4" type="video/mp4" />
             </video>
         </div>
     );
