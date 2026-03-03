@@ -155,7 +155,6 @@ const CenterPanel = forwardRef(function CenterPanel({ subject, currentTopicIdx, 
                 langName,
             });
         } catch (err) {
-            console.error('PDF generation failed:', err);
         } finally {
             setPdfLoading(false);
         }
@@ -190,7 +189,6 @@ const CenterPanel = forwardRef(function CenterPanel({ subject, currentTopicIdx, 
                 }
                 setContent(data?.content || null);
             } catch (err) {
-                console.error('Failed to fetch content:', err);
                 setContentError('Failed to load content.');
             } finally {
                 setContentLoading(false);
@@ -215,7 +213,6 @@ const CenterPanel = forwardRef(function CenterPanel({ subject, currentTopicIdx, 
                 }
                 setQuizQuestions(data || []);
             } catch (err) {
-                console.error('Failed to fetch quiz:', err);
             } finally {
                 setQuizLoading(false);
             }
@@ -247,7 +244,6 @@ const CenterPanel = forwardRef(function CenterPanel({ subject, currentTopicIdx, 
                 setQuizQuestions(quiz || []);
             }
         } catch (err) {
-            console.error('Generation failed:', err);
             setContentError('Content generation failed. Please try again.');
         } finally {
             setGenerating(false);
@@ -310,7 +306,6 @@ const CenterPanel = forwardRef(function CenterPanel({ subject, currentTopicIdx, 
                         body: JSON.stringify({ passed, score: quizState.score })
                     });
                 } catch (err) {
-                    console.error('Failed to save quiz result:', err);
                 }
             }
 

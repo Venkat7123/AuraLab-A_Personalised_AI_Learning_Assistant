@@ -168,7 +168,6 @@ export default function OnboardingPage() {
             if (saveErr) throw saveErr;
             router.replace('/dashboard');
         } catch (err) {
-            console.error("Onboarding error:", err);
             setError(err.message || 'Failed to save preferences');
             setSaving(false);
         }

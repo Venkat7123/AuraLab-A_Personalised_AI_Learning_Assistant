@@ -100,7 +100,6 @@ export const AuthProvider = ({ children }) => {
             if (error) throw error;
             return data.session;
         } catch (error) {
-            console.error('Session refresh failed:', error);
             // If refresh fails, sign out the user
             await signOut();
             throw error;

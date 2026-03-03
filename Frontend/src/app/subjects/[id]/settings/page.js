@@ -77,7 +77,6 @@ export default function SettingsPage() {
                 setMounted(true);
                 document.title = `Settings – ${data.name || 'Subject'} – AuraLab`;
             } catch (error) {
-                console.error('Failed to fetch subject:', error);
                 router.push('/dashboard');
             } finally {
                 setLoading(false);
@@ -105,7 +104,6 @@ export default function SettingsPage() {
             setForm(prev => ({ ...prev, syllabus: newSyllabus }));
             return newSyllabus;
         } catch (err) {
-            console.error('AI syllabus generation failed:', err);
             setGenError(err.message || 'Failed to generate syllabus.');
             return null;
         } finally {
@@ -128,7 +126,6 @@ export default function SettingsPage() {
             });
             router.push(`/subjects/${params.id}`);
         } catch (error) {
-            console.error('Failed to save settings:', error);
             alert('Failed to save. Please try again.');
         } finally { setSaving(false); }
     };
@@ -155,7 +152,6 @@ export default function SettingsPage() {
             });
             router.push(`/subjects/${params.id}`);
         } catch (error) {
-            console.error('Failed to save settings:', error);
             alert('Failed to save. Please try again.');
         } finally { setSaving(false); }
     };

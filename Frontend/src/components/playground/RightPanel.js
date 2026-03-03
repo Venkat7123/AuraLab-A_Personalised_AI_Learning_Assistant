@@ -32,7 +32,6 @@ export default function RightPanel({ subject, currentTopic, activeMode, language
                 const data = await apiFetch(`/api/chat/threads/${subjectId}`);
                 setThreads(data || []);
             } catch (err) {
-                console.error('Failed to load threads:', err);
             }
         };
         loadThreads();
@@ -93,10 +92,8 @@ export default function RightPanel({ subject, currentTopic, activeMode, language
                         setThreads(prev => [{ id: saveRes.threadId, name: saveRes.threadName || `🎨 ${currentInput.substring(0, 40)}`, updated_at: new Date().toISOString() }, ...prev]);
                     }
                 } catch (saveErr) {
-                    console.error('Failed to save infographic to history:', saveErr);
                 }
             } catch (err) {
-                console.error('Image gen error:', err);
                 setMessages(prev => [...prev, { role: 'ai', content: '⚠️ Failed to generate image. Please try again.', time: Date.now() }]);
             } finally {
                 setIsTyping(false);
@@ -129,7 +126,6 @@ export default function RightPanel({ subject, currentTopic, activeMode, language
                     setThreads(prev => [{ id: res.threadId, name: res.threadName || currentInput.substring(0, 50), updated_at: new Date().toISOString() }, ...prev]);
                 }
             } catch (err) {
-                console.error('Chat error:', err);
                 setMessages(prev => [...prev, { role: 'ai', content: '⚠️ Sorry, something went wrong. Please try again.', time: Date.now() }]);
             } finally {
                 setIsTyping(false);
@@ -161,7 +157,6 @@ export default function RightPanel({ subject, currentTopic, activeMode, language
                 };
             }));
         } catch (err) {
-            console.error('Failed to load messages:', err);
         }
     };
 
@@ -171,7 +166,6 @@ export default function RightPanel({ subject, currentTopic, activeMode, language
             setThreads(prev => prev.filter(t => t.id !== threadId));
             if (activeThread === threadId) { setMessages([]); setActiveThread(null); }
         } catch (err) {
-            console.error('Failed to delete thread:', err);
         }
     };
 
@@ -180,7 +174,7 @@ export default function RightPanel({ subject, currentTopic, activeMode, language
         try {
             await apiFetch(`/api/chat/threads/${threadId}`, { method: 'PUT', body: JSON.stringify({ name: editName.trim() }) });
             setThreads(prev => prev.map(t => t.id === threadId ? { ...t, name: editName.trim() } : t));
-        } catch (err) { console.error('Failed to rename:', err); }
+        } catch (err) { }
         setEditingId(null);
         setEditName('');
     };

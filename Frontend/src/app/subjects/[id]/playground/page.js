@@ -136,7 +136,6 @@ export default function PlaygroundPage() {
                 return { ...prev, topics: newTopics };
             });
         } catch (err) {
-            console.error('Failed to mark topic passed:', err);
             // Still update local state as fallback
             setSubject(prev => {
                 if (!prev) return prev;

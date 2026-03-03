@@ -25,7 +25,6 @@ export function SubjectProvider({ children, subjectId }) {
                 setSubject(data);
                 setLanguageState(LANG_CODE_MAP[data.language] || 'en');
             } catch (error) {
-                console.error('Failed to fetch subject:', error);
             } finally {
                 setLoading(false);
             }
@@ -52,7 +51,6 @@ export function SubjectProvider({ children, subjectId }) {
                 topics: data.topics || prev?.topics
             }));
         } catch (error) {
-            console.error('Translation failed:', error);
             // Fallback: keep original topics
         } finally {
             setTranslating(false);

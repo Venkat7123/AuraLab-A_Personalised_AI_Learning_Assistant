@@ -8,7 +8,17 @@ export default function StreakGrid() {
     const [streakData, setStreakData] = useState({});
     const [error, setError] = useState(null);
     const [loading, setLoading] = useState(true);
+    const [isMobile, setIsMobile] = useState(false);
     const { user } = useAuth();
+
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const check = () => setIsMobile(window.innerWidth <= 768);
+            check();
+            window.addEventListener('resize', check);
+            return () => window.removeEventListener('resize', check);
+        }
+    }, []);
 
     useEffect(() => {
         if (!user) return;
@@ -19,7 +29,6 @@ export default function StreakGrid() {
                 const data = await apiFetch('/api/user/streak');
                 setStreakData(data || {});
             } catch (e) {
-                console.error('Failed to fetch streak data:', e);
                 setError(e.message);
                 // If it's auth error, clear the streak data
                 if (e.message.includes('Authentication failed')) {
@@ -31,6 +40,11 @@ export default function StreakGrid() {
         };
         fetchStreak();
     }, [user]);
+
+    // Mobile: smaller cells, fewer weeks
+    const cellSize = isMobile ? 10 : 12;
+    const cellGap = isMobile ? 2 : 3;
+    const colWidth = cellSize + cellGap;
 
     const { data, months } = useMemo(() => {
         const weeksCount = 52;
@@ -66,10 +80,22 @@ export default function StreakGrid() {
         return { data: days, months: monthsList };
     }, [streakData]);
 
-    const weeks = [];
+    // On mobile show only the last ~20 weeks so the grid fits
+    const mobileWeeksCount = 20;
+    const allWeeks = [];
     for (let i = 0; i < data.length; i += 7) {
-        weeks.push(data.slice(i, i + 7));
+        allWeeks.push(data.slice(i, i + 7));
     }
+    const weeks = isMobile ? allWeeks.slice(-mobileWeeksCount) : allWeeks;
+
+    // Recalculate months for the visible weeks
+    const visibleMonths = useMemo(() => {
+        if (!isMobile) return months;
+        const offset = allWeeks.length - mobileWeeksCount;
+        return months
+            .filter(m => m.colIndex >= offset)
+            .map(m => ({ ...m, colIndex: m.colIndex - offset }));
+    }, [isMobile, months, allWeeks.length]);
 
     if (loading) {
         return (
@@ -88,70 +114,78 @@ export default function StreakGrid() {
     }
 
     return (
-        <div className="overflow-x-auto w-full pb-2"><div style={{ padding: '4px 0', minWidth: 'max-content' }}>
+        <div style={{ padding: '4px 0' }}>
             <div style={{
                 display: 'flex',
                 flexDirection: 'column',
-                gap: 5,
-                minWidth: 'max-content',
+                gap: isMobile ? 3 : 5,
             }}>
                 {/* Months Row */}
                 <div style={{
                     display: 'flex',
-                    marginLeft: 26, // Align past the day labels
-                    position: 'relative',
+                    marginLeft: isMobile ? 0 : 26, // No day labels on mobile
                     height: 16,
+                    overflow: 'hidden',
+                    width: weeks.length * colWidth - cellGap,
                 }}>
-                    {months.map((m, i) => (
-                        <div key={i} style={{
-                            position: 'absolute',
-                            left: m.colIndex * 15, // 12px box + 3px gap
-                            fontSize: '0.625rem',
-                            color: 'var(--text-muted)',
-                            whiteSpace: 'nowrap',
-                        }}>
-                            {m.name}
-                        </div>
-                    ))}
+                    {visibleMonths.map((m, i) => {
+                        const nextCol = i < visibleMonths.length - 1 ? visibleMonths[i + 1].colIndex : weeks.length;
+                        const span = nextCol - m.colIndex;
+                        return (
+                            <div key={i} style={{
+                                width: span * colWidth,
+                                flexShrink: 0,
+                                fontSize: '0.625rem',
+                                color: 'var(--text-muted)',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                            }}>
+                                {m.name}
+                            </div>
+                        );
+                    })}
                 </div>
 
                 <div style={{
                     display: 'flex',
-                    gap: 3,
+                    gap: cellGap,
                     alignItems: 'flex-start',
                 }}>
-                    {/* Day labels */}
-                    <div style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: 3,
-                        marginRight: 6,
-                        paddingTop: 0,
-                    }}>
-                        {['', 'Mon', '', 'Wed', '', 'Fri', ''].map((label, i) => (
-                            <div key={i} style={{
-                                height: 12,
-                                fontSize: '0.625rem',
-                                color: 'var(--text-muted)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                lineHeight: 1,
-                            }}>{label}</div>
-                        ))}
-                    </div>
+                    {/* Day labels — hide on mobile */}
+                    {!isMobile && (
+                        <div style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: cellGap,
+                            marginRight: 6,
+                            paddingTop: 0,
+                        }}>
+                            {['', 'Mon', '', 'Wed', '', 'Fri', ''].map((label, i) => (
+                                <div key={i} style={{
+                                    height: cellSize,
+                                    fontSize: '0.625rem',
+                                    color: 'var(--text-muted)',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    lineHeight: 1,
+                                }}>{label}</div>
+                            ))}
+                        </div>
+                    )}
 
                     {/* Grid */}
-                    <div style={{ display: 'flex', gap: 3 }}>
+                    <div style={{ display: 'flex', gap: cellGap }}>
                         {weeks.map((week, wi) => (
                             <div key={wi} style={{
                                 display: 'flex',
                                 flexDirection: 'column',
-                                gap: 3,
+                                gap: cellGap,
                             }}>
                                 {week.map((day, di) => (
                                     <div
                                         key={di}
                                         className={`streak-cell streak-${day.level}`}
+                                        style={{ width: cellSize, height: cellSize }}
                                         title={`${day.fullDate}: ${day.count} activit${day.count === 1 ? 'y' : 'ies'}`}
                                     />
                                 ))}
@@ -160,14 +194,13 @@ export default function StreakGrid() {
                     </div>
                 </div>
             </div>
-        </div>
 
             {/* Legend */}
             <div style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: 6,
-                marginTop: 12,
+                marginTop: isMobile ? 8 : 12,
                 justifyContent: 'flex-end',
             }}>
                 <span style={{ fontSize: '0.6875rem', color: 'var(--text-muted)' }}>Less</span>

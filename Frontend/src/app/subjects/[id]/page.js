@@ -48,7 +48,6 @@ export default function SubjectDetailPage() {
                 setSubject(data);
                 setMounted(true);
             } catch (error) {
-                console.error('Failed to fetch subject:', error);
                 router.push('/dashboard');
             } finally {
                 setLoading(false);
@@ -121,7 +120,6 @@ export default function SubjectDetailPage() {
                 langName: subject?.language || 'English',
             });
         } catch (err) {
-            console.error('PDF generation failed:', err);
         } finally {
             setPdfLoading(null);
         }
@@ -142,7 +140,6 @@ export default function SubjectDetailPage() {
             const data = await apiFetch(`/api/content/exam/${subject.id}?lang=${langName}`);
             setExamQuestions(Array.isArray(data) ? data : []);
         } catch (err) {
-            console.error('Exam prep failed:', err);
             setExamQuestions([]);
         } finally {
             setExamLoading(false);
@@ -313,7 +310,6 @@ export default function SubjectDetailPage() {
                                         await apiFetch(`/api/subjects/${subject.id}`, { method: 'DELETE' });
                                         router.push('/dashboard');
                                     } catch (e) {
-                                        console.error(e);
                                         alert('Failed to delete subject');
                                     }
                                 }

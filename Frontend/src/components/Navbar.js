@@ -33,7 +33,6 @@ export default function Navbar() {
                 }
                 setStreak(currentStreak);
             } catch (e) {
-                console.error('Failed to fetch streak:', e);
                 // If it's auth error, reset streak to 0
                 if (e.message.includes('Authentication failed')) {
                     setStreak(0);

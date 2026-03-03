@@ -43,7 +43,6 @@ export default function DashboardPage() {
             await apiFetch(`/api/subjects/${id}`, { method: 'DELETE' });
             setSubjects(prev => prev.filter(s => s.id !== id));
         } catch (e) {
-            console.error('Delete error:', e);
             alert('Failed to delete subject.');
         } finally {
             setDeleting(null);
@@ -67,7 +66,6 @@ export default function DashboardPage() {
                     setSubjects(subjects || []);
                     setStreak(calcStreak(streakData || {}));
                 } catch (e) {
-                    console.error('Dashboard load error:', e);
                 } finally {
                     setSubjectsLoading(false);
                 }

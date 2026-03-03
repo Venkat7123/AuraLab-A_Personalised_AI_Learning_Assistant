@@ -10,37 +10,34 @@ async function getValidSession() {
   try {
     // First try to get current session
     let { data: { session }, error } = await supabase.auth.getSession()
-    
+
     if (error) {
-      console.error('Session error:', error)
       return null
     }
-    
+
     // If no session, user is not logged in
     if (!session) {
       return null
     }
-    
+
     // Check if token is about to expire (within 5 minutes)
     const now = Math.floor(Date.now() / 1000)
     const expiresAt = session.expires_at
     const timeUntilExpiry = expiresAt - now
-    
+
     // If token expires in less than 5 minutes, refresh it
     if (timeUntilExpiry < 300) {
       const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession()
       if (refreshError) {
-        console.error('Token refresh failed:', refreshError)
         // If refresh fails, sign out the user
         await supabase.auth.signOut()
         return null
       }
       session = refreshData.session
     }
-    
+
     return session
   } catch (error) {
-    console.error('Error getting valid session:', error)
     return null
   }
 }
@@ -51,7 +48,6 @@ export async function apiFetch(path, options = {}) {
   const token = session?.access_token
 
   const fullUrl = `${API_BASE}${path}`
-  console.log('API Fetch URL:', fullUrl)
 
   const res = await fetch(fullUrl, {
     ...options,
@@ -64,7 +60,7 @@ export async function apiFetch(path, options = {}) {
 
   if (!res.ok) {
     let msg = `API error ${res.status}`
-    
+
     // Special handling for common HTTP status codes
     if (res.status === 401) {
       // Try to refresh the session and retry the request once
@@ -126,7 +122,7 @@ export async function apiUpload(path, file, options = {}) {
 
   if (!res.ok) {
     let msg = `API error ${res.status}`
-    
+
     // Special handling for common HTTP status codes
     if (res.status === 401) {
       // Try to refresh the session and retry the request once

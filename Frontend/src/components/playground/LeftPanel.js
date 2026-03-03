@@ -38,7 +38,6 @@ export default function LeftPanel({ subject, currentTopicIdx, onSelectTopic }) {
                 setScanImages((scanData || []).filter(item => item.image_url));
                 setGeneratedImages(imgData || []);
             } catch (err) {
-                console.error('Failed to fetch library:', err);
             } finally {
                 setLibraryLoading(false);
             }

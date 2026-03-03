@@ -121,7 +121,6 @@ export default function AddSubjectPage() {
                 })),
             });
         } catch (err) {
-            console.error('AI syllabus generation failed:', err);
             setGenError(err.message || 'Failed to generate syllabus. Please check your backend / API key and try again.');
         } finally {
             setGenerating(false);
@@ -146,7 +145,6 @@ export default function AddSubjectPage() {
                 })),
             });
         } catch (err) {
-            console.error('PDF upload failed:', err);
             setUploadError(err.message || 'Failed to process PDF. Please try again.');
         } finally {
             setUploading(false);
@@ -173,7 +171,6 @@ export default function AddSubjectPage() {
             });
             router.push('/dashboard');
         } catch (error) {
-            console.error('Failed to save subject:', error);
             alert('Failed to save subject. Please try again.');
             setSaving(false);
         }

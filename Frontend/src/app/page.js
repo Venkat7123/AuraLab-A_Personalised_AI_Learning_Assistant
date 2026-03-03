@@ -150,10 +150,10 @@ export default function Home() {
           ) : (
             <>
               <Link href="/login" className="btn-secondary text-xs md:text-base px-3 py-2 md:px-6 md:py-2.5" style={{ textDecoration: 'none' }}>
-                Log In
+                Login
               </Link>
               <Link href="/signup" className="btn-primary text-xs md:text-base px-3 py-2 md:px-6 md:py-2.5" style={{ textDecoration: 'none' }}>
-                Free <span className="hidden sm:inline">Start</span>
+                Get Started <span className="hidden sm:inline">Start</span>
               </Link>
             </>
           )}
