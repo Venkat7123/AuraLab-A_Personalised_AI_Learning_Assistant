@@ -186,7 +186,38 @@ export default function SettingsPage() {
         form.intensity !== original.intensity
     );
 
-    if (!mounted || authLoading || loading) return null;
+    if (!mounted || authLoading || loading) return (
+        <div style={{ minHeight: '100vh', background: 'var(--bg-primary)' }}>
+            <Navbar />
+            <main style={{ maxWidth: 640, margin: '0 auto', padding: '24px 24px 80px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 32 }}>
+                    <div className="skeleton" style={{ width: 36, height: 36, borderRadius: 8 }} />
+                    <div>
+                        <div className="skeleton skeleton-text" style={{ height: 28, width: 180, marginBottom: 6 }} />
+                        <div className="skeleton skeleton-text" style={{ height: 14, width: 220, marginBottom: 0 }} />
+                    </div>
+                </div>
+                {[1, 2].map(i => (
+                    <div key={i} className="skeleton skeleton-card" style={{ padding: '28px 24px', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 20 }}>
+                        <div className="skeleton" style={{ width: 56, height: 56, borderRadius: 16, flexShrink: 0 }} />
+                        <div style={{ flex: 1 }}>
+                            <div className="skeleton skeleton-text" style={{ height: 18, width: '50%', marginBottom: 8 }} />
+                            <div className="skeleton skeleton-text" style={{ height: 12, width: '80%', marginBottom: 0 }} />
+                        </div>
+                    </div>
+                ))}
+                <div className="skeleton skeleton-card" style={{ padding: 20, marginTop: 8 }}>
+                    <div className="skeleton skeleton-text" style={{ height: 12, width: 160, marginBottom: 16 }} />
+                    {[1, 2, 3].map(i => (
+                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0' }}>
+                            <div className="skeleton skeleton-text" style={{ height: 14, width: 80, marginBottom: 0 }} />
+                            <div className="skeleton skeleton-text" style={{ height: 14, width: 100, marginBottom: 0 }} />
+                        </div>
+                    ))}
+                </div>
+            </main>
+        </div>
+    );
 
     // ─── Choose Mode ─────────────────
     if (settingsMode === null) {

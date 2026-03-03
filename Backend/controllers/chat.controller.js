@@ -4,7 +4,7 @@ import * as chatService from '../services/chat.service.js'
 // POST /api/chat/send — send a message and get AI response
 export const sendMessage = async (req, res, next) => {
     try {
-        const { threadId, message, topicTitle, subjectName, mode, language } = req.body
+        const { threadId, message, topicTitle, subjectName, mode, language, skipAI, aiResponse: providedAiResponse } = req.body
         const userId = req.user.id
 
         if (!message?.trim()) return res.status(400).json({ error: 'Message is required' })
@@ -20,21 +20,28 @@ export const sendMessage = async (req, res, next) => {
             actualThreadId = thread.id
         }
 
-        // Get conversation history for context
-        const history = await chatService.getChatMessages(req.supabase, actualThreadId)
-
         // Save user message
         await chatService.saveChatMessage(req.supabase, actualThreadId, 'user', message.trim())
 
-        // Get AI response
-        const aiResponse = await chatWithAI({
-            message: message.trim(),
-            history: history.map(m => ({ role: m.role, content: m.content })),
-            topicTitle,
-            subjectName,
-            mode,
-            language
-        })
+        let aiResponse
+
+        if (skipAI && providedAiResponse) {
+            // Skip AI call — save the provided response directly (e.g. infographic image)
+            aiResponse = providedAiResponse
+        } else {
+            // Get conversation history for context
+            const history = await chatService.getChatMessages(req.supabase, actualThreadId)
+
+            // Get AI response
+            aiResponse = await chatWithAI({
+                message: message.trim(),
+                history: history.map(m => ({ role: m.role, content: m.content })),
+                topicTitle,
+                subjectName,
+                mode,
+                language
+            })
+        }
 
         // Save AI response
         await chatService.saveChatMessage(req.supabase, actualThreadId, 'ai', aiResponse)

@@ -174,10 +174,67 @@ export default function SubjectDetailPage() {
     const examTotal = examQuestions.length;
     const examPassed = examTotal > 0 && (examScore / examTotal) >= 0.6;
 
-    if (!mounted || !subject) return null;
+    if (!mounted) return null;
+
+    if (loading || !subject) {
+        return (
+            <div style={{ minHeight: '100vh', background: 'transparent' }}>
+                <Navbar />
+                <main style={{ maxWidth: 880, margin: '0 auto', padding: '24px 24px 80px' }}>
+                    {/* Back button skeleton */}
+                    <div className="skeleton" style={{ height: 36, width: 180, borderRadius: 8, marginBottom: 24 }} />
+
+                    {/* Hero Skeleton */}
+                    <div className="skeleton skeleton-card" style={{ padding: '40px 36px', marginBottom: 28 }}>
+                        <div className="skeleton skeleton-text" style={{ height: 22, width: 100, marginBottom: 16, borderRadius: 20 }} />
+                        <div className="skeleton skeleton-text" style={{ height: 32, width: '60%', marginBottom: 12 }} />
+                        <div className="skeleton skeleton-text" style={{ height: 14, width: '45%', marginBottom: 28 }} />
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 20, marginBottom: 24 }}>
+                            <div className="skeleton skeleton-circle" style={{ width: 72, height: 72, flexShrink: 0 }} />
+                            <div style={{ flex: 1 }}>
+                                <div className="skeleton skeleton-text" style={{ height: 14, width: '50%', marginBottom: 8 }} />
+                                <div className="skeleton" style={{ height: 8, borderRadius: 6 }} />
+                            </div>
+                        </div>
+                        <div style={{ display: 'flex', gap: 12 }}>
+                            <div className="skeleton" style={{ height: 48, width: 180, borderRadius: 10 }} />
+                            <div className="skeleton" style={{ height: 48, width: 140, borderRadius: 10 }} />
+                        </div>
+                    </div>
+
+                    {/* Stats Skeleton */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 16, marginBottom: 28 }}>
+                        {[1, 2, 3, 4].map(i => (
+                            <div key={i} className="skeleton skeleton-card" style={{ padding: 20, display: 'flex', alignItems: 'center', gap: 14 }}>
+                                <div className="skeleton skeleton-circle" style={{ width: 42, height: 42, flexShrink: 0 }} />
+                                <div style={{ flex: 1 }}>
+                                    <div className="skeleton skeleton-text" style={{ height: 12, width: '60%', marginBottom: 6 }} />
+                                    <div className="skeleton skeleton-text" style={{ height: 18, width: '45%', marginBottom: 0 }} />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Topics Skeleton */}
+                    <div className="skeleton skeleton-card" style={{ padding: 28 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 24 }}>
+                            <div className="skeleton skeleton-text" style={{ height: 20, width: 100 }} />
+                            <div className="skeleton skeleton-text" style={{ height: 20, width: 70, borderRadius: 20 }} />
+                        </div>
+                        {[1, 2, 3, 4, 5].map(i => (
+                            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 14, padding: '14px 0', borderBottom: i < 5 ? '1px solid var(--border-color)' : 'none' }}>
+                                <div className="skeleton skeleton-circle" style={{ width: 32, height: 32, flexShrink: 0 }} />
+                                <div className="skeleton skeleton-text" style={{ height: 14, width: `${55 + i * 5}%`, marginBottom: 0 }} />
+                            </div>
+                        ))}
+                    </div>
+                </main>
+            </div>
+        );
+    }
 
     return (
-        <div style={{ minHeight: '100vh', background: 'var(--bg-primary)' }}>
+        <div style={{ minHeight: '100vh', background: 'transparent' }}>
             <Navbar />
 
             <main style={{ maxWidth: 880, margin: '0 auto', padding: '24px 24px 80px' }}>

@@ -182,12 +182,13 @@ const CenterPanel = forwardRef(function CenterPanel({ subject, currentTopicIdx, 
             setContentError('');
             setContent(null);
             try {
-                const data = await apiFetch(`/api/content/${topicId}/${activeMode}?lang=${langName}`);
-                if (data?.content) {
-                    setContent(data.content);
-                } else {
-                    setContent(null);
+                // Try selected language first
+                let data = await apiFetch(`/api/content/${topicId}/${activeMode}?lang=${langName}`);
+                // Fallback to English if not found in selected language
+                if (!data?.content && langName !== 'English') {
+                    data = await apiFetch(`/api/content/${topicId}/${activeMode}?lang=English`);
                 }
+                setContent(data?.content || null);
             } catch (err) {
                 console.error('Failed to fetch content:', err);
                 setContentError('Failed to load content.');
@@ -206,7 +207,12 @@ const CenterPanel = forwardRef(function CenterPanel({ subject, currentTopicIdx, 
             setQuizLoading(true);
             setQuizQuestions([]);
             try {
-                const data = await apiFetch(`/api/content/${topicId}/quiz?lang=${langName}`);
+                // Try selected language first
+                let data = await apiFetch(`/api/content/${topicId}/quiz?lang=${langName}`);
+                // Fallback to English if no questions found
+                if ((!data || data.length === 0) && langName !== 'English') {
+                    data = await apiFetch(`/api/content/${topicId}/quiz?lang=English`);
+                }
                 setQuizQuestions(data || []);
             } catch (err) {
                 console.error('Failed to fetch quiz:', err);
@@ -414,7 +420,7 @@ const CenterPanel = forwardRef(function CenterPanel({ subject, currentTopicIdx, 
     );
 
     return (
-        <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--bg-primary)', position: 'relative' }}>
+        <div style={{ height: '100%', display: 'flex', flexDirection: 'column', background: 'var(--panel-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', position: 'relative' }}>
             {/* Focus Warning Toast */}
             {focusWarning && (
                 <div style={{
@@ -436,7 +442,7 @@ const CenterPanel = forwardRef(function CenterPanel({ subject, currentTopicIdx, 
                 display: 'flex', alignItems: 'center',
                 padding: '6px 12px',
                 borderBottom: '1px solid var(--border-color)', flexShrink: 0,
-                background: 'var(--bg-card)',
+                background: 'transparent',
                 gap: 2,
                 overflowX: 'auto',
                 scrollbarWidth: 'none',

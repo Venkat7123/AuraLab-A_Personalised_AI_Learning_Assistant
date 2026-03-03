@@ -2,13 +2,11 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { Sun, Moon, Flame, ChevronDown, LogOut, User } from 'lucide-react';
-import { useTheme } from './ThemeProvider';
+import { Flame, ChevronDown, LogOut, User } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/utils/api';
 
 export default function Navbar() {
-    const { theme, toggleTheme } = useTheme();
     const router = useRouter();
     const pathname = usePathname();
     const { user, signOut } = useAuth();
@@ -90,27 +88,28 @@ export default function Navbar() {
                     flexShrink: 0,
                 }}
             >
-                <div style={{
-                    width: 34,
-                    height: 34,
-                    borderRadius: 10,
-                    background: 'linear-gradient(135deg, #6366f1, #a855f7)',
+                <img
+                    src="/logo.png"
+                    alt="AuraLab Logo"
+                    style={{
+                        width: 38,
+                        height: 38,
+                        borderRadius: 9,
+                        objectFit: 'cover',
+                        flexShrink: 0,
+                    }}
+                />
+                <span style={{
+                    fontSize: '1.75rem',
+                    fontWeight: 700,
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 2px 10px rgba(99,102,241,0.35)',
-                    flexShrink: 0,
-                }}>
-                    <span style={{ fontSize: 16, fontWeight: 800, color: 'white' }}>A</span>
-                </div>
-                <span style={{
-                    fontSize: '1.125rem',
-                    fontWeight: 700,
                     background: 'linear-gradient(135deg, #6366f1, #a855f7)',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                     backgroundClip: 'text',
                     letterSpacing: '-0.02em',
+                    marginTop: '7px',
                 }}>AuraLab</span>
             </a>
 
@@ -119,21 +118,6 @@ export default function Navbar() {
 
             {/* Right Controls */}
             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-
-                {/* Theme Toggle */}
-                <button
-                    className="btn-ghost"
-                    onClick={toggleTheme}
-                    title={theme === 'dark' ? 'Switch to Light' : 'Switch to Dark'}
-                    style={{
-                        padding: '8px',
-                        borderRadius: 10,
-                        color: 'var(--text-muted)',
-                        transition: 'all 0.2s',
-                    }}
-                >
-                    {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-                </button>
 
                 {/* Streak Badge */}
                 <div style={{

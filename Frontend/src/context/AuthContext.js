@@ -7,10 +7,13 @@ const AuthContext = createContext({
     user: null,
     session: null,
     loading: true,
-    signUp: async () => {},
-    signIn: async () => {},
-    signOut: async () => {},
-    refreshSession: async () => {},
+    signUp: async () => { },
+    signIn: async () => { },
+    signInWithGoogle: async () => { },
+    signOut: async () => { },
+    refreshSession: async () => { },
+    resetPassword: async () => { },
+    updatePassword: async () => { },
 });
 
 export const AuthProvider = ({ children }) => {
@@ -59,6 +62,33 @@ export const AuthProvider = ({ children }) => {
         return data;
     };
 
+    const signInWithGoogle = async () => {
+        const { data, error } = await supabase.auth.signInWithOAuth({
+            provider: 'google',
+            options: {
+                redirectTo: `${window.location.origin}/onboarding`
+            }
+        });
+        if (error) throw error;
+        return data;
+    };
+
+    const resetPassword = async (email) => {
+        const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+            redirectTo: `${window.location.origin}/update-password`,
+        });
+        if (error) throw error;
+        return data;
+    };
+
+    const updatePassword = async (newPassword) => {
+        const { data, error } = await supabase.auth.updateUser({
+            password: newPassword
+        });
+        if (error) throw error;
+        return data;
+    };
+
     const signOut = async () => {
         const { error } = await supabase.auth.signOut();
         if (error) throw error;
@@ -83,8 +113,11 @@ export const AuthProvider = ({ children }) => {
         loading,
         signUp,
         signIn,
+        signInWithGoogle,
         signOut,
         refreshSession,
+        resetPassword,
+        updatePassword,
     };
 
     return (

@@ -83,6 +83,7 @@ export const updateUserAvatar = async (supabase, userId, avatarData) => {
 }
 
 export const deleteUserAccount = async (supabase, userId) => {
+    // 1. Delete the profile data (though cascade might handle it)
     const { error: profileError } = await supabase
         .from('profiles')
         .delete()
@@ -92,5 +93,11 @@ export const deleteUserAccount = async (supabase, userId) => {
         throw new Error('Failed to delete profile data')
     }
 
-    return { success: true, message: 'Account deletion initiated' }
+    // 2. Delete the actual auth user
+    const { error: authError } = await supabaseAdmin.auth.admin.deleteUser(userId)
+    if (authError) {
+        throw new Error('Failed to delete authentication account')
+    }
+
+    return { success: true, message: 'Account deleted successfully' }
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { CheckCircle2, Circle, Lock, ChevronDown, ChevronRight, FileText, Image as ImageIcon, BookOpen, ExternalLink } from 'lucide-react';
 import { apiFetch } from '@/utils/api';
 
@@ -48,10 +49,11 @@ export default function LeftPanel({ subject, currentTopicIdx, onSelectTopic }) {
     return (
         <div style={{
             height: '100%', display: 'flex', flexDirection: 'column',
-            background: 'var(--bg-card)', overflowY: 'auto',
+            background: 'var(--panel-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+            overflowY: 'auto', borderRight: '1px solid rgba(255,255,255,0.08)',
         }}>
             {/* Lightbox Overlay */}
-            {lightboxImg && (
+            {lightboxImg && createPortal(
                 <div onClick={() => setLightboxImg(null)} style={{
                     position: 'fixed', inset: 0, zIndex: 9999,
                     background: 'rgba(0,0,0,0.85)', display: 'flex',
@@ -68,7 +70,8 @@ export default function LeftPanel({ subject, currentTopicIdx, onSelectTopic }) {
                         color: 'white', fontSize: '1.25rem', cursor: 'pointer',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}>✕</button>
-                </div>
+                </div>,
+                document.body
             )}
             {/* Subject Header with Progress */}
             <div style={{

@@ -63,7 +63,36 @@ export default function AddSubjectPage() {
         if (user) setMounted(true);
     }, [user, authLoading, router]);
 
-    if (!mounted || authLoading) return null;
+    if (!mounted || authLoading) return (
+        <div style={{ minHeight: '100vh', background: 'transparent' }}>
+            <Navbar />
+            <main style={{ maxWidth: 680, margin: '0 auto', padding: '32px 24px 80px' }}>
+                {/* Step indicator skeleton */}
+                <div style={{ display: 'flex', justifyContent: 'center', gap: 16, marginBottom: 40 }}>
+                    {[1, 2, 3, 4].map(i => (
+                        <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                            <div className="skeleton skeleton-circle" style={{ width: 32, height: 32 }} />
+                            {i < 4 && <div className="skeleton" style={{ width: 40, height: 3, borderRadius: 2 }} />}
+                        </div>
+                    ))}
+                </div>
+                {/* Form card skeleton */}
+                <div className="skeleton skeleton-card" style={{ padding: 32 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24 }}>
+                        <div className="skeleton" style={{ width: 44, height: 44, borderRadius: 12 }} />
+                        <div>
+                            <div className="skeleton skeleton-text" style={{ height: 22, width: 200, marginBottom: 6 }} />
+                            <div className="skeleton skeleton-text" style={{ height: 12, width: 160, marginBottom: 0 }} />
+                        </div>
+                    </div>
+                    <div className="skeleton skeleton-text" style={{ height: 14, width: 100, marginBottom: 10 }} />
+                    <div className="skeleton" style={{ height: 44, borderRadius: 8, marginBottom: 24 }} />
+                    <div className="skeleton skeleton-text" style={{ height: 14, width: 120, marginBottom: 10 }} />
+                    <div className="skeleton" style={{ height: 80, borderRadius: 8 }} />
+                </div>
+            </main>
+        </div>
+    );
 
     const generateSyllabus = async () => {
         setGenerating(true);
@@ -188,7 +217,7 @@ export default function AddSubjectPage() {
     const steps = ['Subject Info', 'Learning Preferences', 'Build Syllabus', 'Review & Create'];
 
     return (
-        <div style={{ minHeight: '100vh', background: 'var(--bg-primary)' }}>
+        <div style={{ minHeight: '100vh', background: 'transparent' }}>
             <Navbar />
             <main style={{ maxWidth: 680, margin: '0 auto', padding: '32px 24px 80px' }}>
                 {/* Step Indicator */}

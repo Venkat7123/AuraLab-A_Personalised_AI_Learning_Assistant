@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import {
     Send, MessageSquarePlus, History, X, Pencil, Trash2,
     Sparkles, Bot, ImageIcon
@@ -70,9 +71,9 @@ export default function RightPanel({ subject, currentTopic, activeMode, language
                 };
                 setMessages(prev => [...prev, imgMsg]);
 
-                // Save to chat thread so it appears in history
-                if (activeThread) {
-                    apiFetch('/api/chat/send', {
+                // Always save infographic chat to history (create thread if needed)
+                try {
+                    const saveRes = await apiFetch('/api/chat/send', {
                         method: 'POST',
                         body: JSON.stringify({
                             threadId: activeThread,
@@ -82,9 +83,17 @@ export default function RightPanel({ subject, currentTopic, activeMode, language
                             subjectName,
                             mode: activeMode,
                             language: languageName,
-                            skipAI: true, // we already have the response
+                            skipAI: true,
+                            aiResponse: `[IMG]${res.imageUrl}`,
                         })
-                    }).catch(() => {}); // fire-and-forget save
+                    });
+                    // Update thread state if a new thread was created
+                    if (!activeThread && saveRes.threadId) {
+                        setActiveThread(saveRes.threadId);
+                        setThreads(prev => [{ id: saveRes.threadId, name: saveRes.threadName || `🎨 ${currentInput.substring(0, 40)}`, updated_at: new Date().toISOString() }, ...prev]);
+                    }
+                } catch (saveErr) {
+                    console.error('Failed to save infographic to history:', saveErr);
                 }
             } catch (err) {
                 console.error('Image gen error:', err);
@@ -198,10 +207,10 @@ export default function RightPanel({ subject, currentTopic, activeMode, language
     return (
         <div style={{
             height: '100%', display: 'flex', flexDirection: 'column',
-            background: 'var(--bg-card)', position: 'relative',
+            background: 'var(--panel-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', position: 'relative',
         }}>
             {/* Lightbox Overlay */}
-            {lightboxImg && (
+            {lightboxImg && createPortal(
                 <div onClick={() => setLightboxImg(null)} style={{
                     position: 'fixed', inset: 0, zIndex: 9999,
                     background: 'rgba(0,0,0,0.85)', display: 'flex',
@@ -219,7 +228,8 @@ export default function RightPanel({ subject, currentTopic, activeMode, language
                         color: 'white', fontSize: '1.25rem', cursor: 'pointer',
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                     }}>✕</button>
-                </div>
+                </div>,
+                document.body
             )}
 
             {/* Header */}
@@ -242,7 +252,14 @@ export default function RightPanel({ subject, currentTopic, activeMode, language
                 </div>
                 <div style={{ display: 'flex', gap: 4 }}>
                     {/* Infographic toggle */}
-                    <button onClick={() => setInfographicMode(!infographicMode)} title="Infographic Mode"
+                    <button onClick={() => {
+                        if (!infographicMode && messages.length > 0) {
+                            // Switching TO infographic mode while mid-conversation → start new chat
+                            setMessages([]);
+                            setActiveThread(null);
+                        }
+                        setInfographicMode(!infographicMode);
+                    }} title="Infographic Mode"
                         style={{
                             padding: '6px', borderRadius: 'var(--radius-sm)',
                             background: infographicMode ? 'rgba(245,158,11,0.15)' : 'transparent',
@@ -440,7 +457,7 @@ export default function RightPanel({ subject, currentTopic, activeMode, language
             {/* Input */}
             <div style={{
                 padding: '12px 14px', borderTop: '1px solid var(--border-color)',
-                background: 'var(--bg-card)',
+                background: 'transparent',
             }}>
                 <div style={{
                     display: 'flex', alignItems: 'center', gap: 8,

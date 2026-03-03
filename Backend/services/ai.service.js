@@ -9,7 +9,7 @@ const genAI2 = new GoogleGenerativeAI(process.env.GEMINI_API_KEY2)
 const delay = (ms) => new Promise(res => setTimeout(res, ms))
 
 // Generic wrapper to handle rate limits (429) & server errors (503) with automatic key rotation
-const callGeminiWithFallback = async (modelOptions, generationFn) => {
+export const callGeminiWithFallback = async (modelOptions, generationFn) => {
   try {
     const model1 = genAI1.getGenerativeModel(modelOptions)
     return await generationFn(model1)
@@ -382,8 +382,6 @@ Be encouraging and educational in your tone.${langInstruction}`
 }
 
 export const chatWithAI = async ({ message, history = [], topicTitle, subjectName, mode, language = 'English' }) => {
-  const model = genAI2.getGenerativeModel({ model: "gemini-2.5-flash" })
-
   const langInstruction = language && language !== 'English'
     ? `\nIMPORTANT: You MUST respond ENTIRELY in ${language}. Use natural, colloquial ${language} — the kind people actually speak day to day.`
     : ''
@@ -402,28 +400,27 @@ Rules:
 - Use bullet points and numbered lists for clarity
 - Be encouraging and supportive${langInstruction}`
 
-  // Build conversation history for context
-  const contents = []
+  // Build history for startChat (all messages EXCEPT the current one)
+  const chatHistory = [
+    { role: 'user', parts: [{ text: systemPrompt }] },
+    { role: 'model', parts: [{ text: "Understood! I'm ready to help you learn. Ask me anything!" }] },
+  ]
 
-  // Add system context as first user message
-  contents.push({ role: 'user', parts: [{ text: systemPrompt }] })
-  contents.push({ role: 'model', parts: [{ text: 'Understood! I\'m ready to help you learn. Ask me anything!' }] })
-
-  // Add conversation history (last 10 messages for context window)
+  // Add last 10 messages from conversation history
   const recentHistory = history.slice(-10)
   for (const msg of recentHistory) {
-    contents.push({
+    chatHistory.push({
       role: msg.role === 'user' ? 'user' : 'model',
       parts: [{ text: msg.content }]
     })
   }
 
-  // Add current message
-  contents.push({ role: 'user', parts: [{ text: message }] })
-
   const result = await callGeminiWithFallback(
-    { model: "gemini-2.5-flash" },
-    (model) => model.generateContent({ contents })
+    { model: 'gemini-2.5-flash' },
+    async (model) => {
+      const chat = model.startChat({ history: chatHistory })
+      return await chat.sendMessage(message)
+    }
   )
   return result.response.text()
 }

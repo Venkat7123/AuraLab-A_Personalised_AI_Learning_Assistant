@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { ArrowLeft, PanelLeftClose, PanelRightClose, ChevronRight, BookOpen, Languages, Download } from 'lucide-react';
+import { ArrowLeft, PanelLeftClose, PanelRightClose, ChevronRight, BookOpen, Languages, Download, Loader2 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 
 const LANG_CODE_MAP = {
@@ -16,17 +16,38 @@ import LeftPanel from '@/components/playground/LeftPanel';
 import CenterPanel from '@/components/playground/CenterPanel';
 import RightPanel from '@/components/playground/RightPanel';
 import { useAuth } from '@/context/AuthContext';
+import { useSubject } from '@/context/SubjectContext';
 import { apiFetch } from '@/utils/api';
+
+function VideoBg() {
+    return (
+        <div style={{
+            position: 'fixed', inset: 0, width: '100vw', height: '100vh',
+            pointerEvents: 'none', overflow: 'hidden', zIndex: -1,
+        }}>
+            <video
+                autoPlay loop muted playsInline
+                style={{
+                    position: 'absolute', top: '50%', left: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    minWidth: '100vw', minHeight: '100vh',
+                    objectFit: 'cover',
+                }}
+            >
+                <source src="/background-tech.mp4" type="video/mp4" />
+            </video>
+        </div>
+    );
+}
 
 export default function PlaygroundPage() {
     const params = useParams();
     const router = useRouter();
     const { user, loading: authLoading } = useAuth();
-    const [subject, setSubject] = useState(null);
+    const { subject, language, setLanguage, loading: subjectLoading } = useSubject();
     const [currentTopicIdx, setCurrentTopicIdx] = useState(0);
     const [activeMode, setActiveMode] = useState('explain');
     const [mounted, setMounted] = useState(false);
-    const [language, setLanguage] = useState('en');
     const [pdfLoading, setPdfLoading] = useState(false);
     const centerPanelRef = useRef(null);
 
@@ -49,31 +70,14 @@ export default function PlaygroundPage() {
             return;
         }
 
-        const id = params?.id;
-        if (!id || !user) return;
-
-        const fetchSubject = async () => {
-            try {
-                const data = await apiFetch(`/api/subjects/${id}`);
-                if (!data) { router.push('/dashboard'); return; }
-                setSubject(data);
-
-                // Initialize language from subject's saved language
-                setLanguage(LANG_CODE_MAP[data.language] || 'en');
-
-                // Find first non-passed topic
-                const topics = data.topics || [];
-                const firstIncompleteIdx = topics.findIndex(t => !t.passed);
-                setCurrentTopicIdx(firstIncompleteIdx === -1 ? Math.max(0, topics.length - 1) : firstIncompleteIdx);
-
-                setMounted(true);
-            } catch (error) {
-                console.error('Failed to fetch subject:', error);
-                router.push('/dashboard');
-            }
-        };
-        fetchSubject();
-    }, [params?.id, user, authLoading, router]);
+        if (subject && !subjectLoading) {
+            // Find first non-passed topic
+            const topics = subject.topics || [];
+            const firstIncompleteIdx = topics.findIndex(t => !t.passed);
+            setCurrentTopicIdx(firstIncompleteIdx === -1 ? Math.max(0, topics.length - 1) : firstIncompleteIdx);
+            setMounted(true);
+        }
+    }, [user, authLoading, subject, subjectLoading, router]);
 
     useEffect(() => {
         const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -161,19 +165,59 @@ export default function PlaygroundPage() {
         return () => { document.title = 'AuraLab – AI-Powered Learning Assistant'; };
     }, [currentTopic, subject?.name]);
 
-    if (!mounted || !subject) return null;
+    if (!mounted) return null;
+
+    if (subjectLoading || !subject) {
+        return (
+            <div style={{ minHeight: '100vh', background: 'transparent' }}>
+                <VideoBg />
+                <Navbar />
+                <div style={{ display: 'flex', height: 'calc(100vh - 64px)' }}>
+                    {/* Left Panel Skeleton */}
+                    <div style={{ width: 280, borderRight: '1px solid var(--border-color)', padding: 20 }}>
+                        <div className="skeleton skeleton-text" style={{ height: 24, width: '70%', marginBottom: 20 }} />
+                        <div className="skeleton" style={{ height: 6, borderRadius: 4, marginBottom: 24 }} />
+                        {[1, 2, 3, 4, 5].map(i => (
+                            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+                                <div className="skeleton skeleton-circle" style={{ width: 28, height: 28, flexShrink: 0 }} />
+                                <div className="skeleton skeleton-text" style={{ height: 14, width: `${50 + i * 8}%`, marginBottom: 0 }} />
+                            </div>
+                        ))}
+                    </div>
+                    {/* Center Panel Skeleton */}
+                    <div style={{ flex: 1, padding: 24 }}>
+                        <div className="skeleton skeleton-text" style={{ height: 28, width: '40%', marginBottom: 20 }} />
+                        <div className="skeleton" style={{ height: 200, borderRadius: 12, marginBottom: 16 }} />
+                        <div className="skeleton skeleton-text" style={{ height: 14, width: '90%', marginBottom: 8 }} />
+                        <div className="skeleton skeleton-text" style={{ height: 14, width: '75%', marginBottom: 8 }} />
+                        <div className="skeleton skeleton-text" style={{ height: 14, width: '60%' }} />
+                    </div>
+                    {/* Right Panel Skeleton */}
+                    <div style={{ width: 340, borderLeft: '1px solid var(--border-color)', padding: 16 }}>
+                        <div className="skeleton skeleton-text" style={{ height: 20, width: '50%', marginBottom: 20 }} />
+                        {[1, 2, 3].map(i => (
+                            <div key={i} style={{ marginBottom: 16 }}>
+                                <div className="skeleton" style={{ height: 50, borderRadius: 10, marginBottom: 8 }} />
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            </div>
+        );
+    }
 
     const progress = Math.round(((subject.topics || []).filter(t => t.passed).length / (subject.topics?.length || 1)) * 100);
 
     // ─── Mobile Layout ─────────────────
     if (isMobile) {
         return (
-            <div style={{ minHeight: '100vh', background: 'var(--bg-primary)' }}>
+            <div style={{ minHeight: '100vh', background: 'transparent' }}>
+                <VideoBg />
                 <Navbar />
                 {/* Mobile Tab Switcher */}
                 <div style={{
-                    display: 'flex', borderBottom: '1px solid var(--border-color)',
-                    background: 'var(--bg-card)', padding: '0 4px',
+                    display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.08)',
+                    background: 'var(--panel-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', padding: '0 4px',
                 }}>
                     {[
                         { key: 'left', label: '📖 Syllabus' },
@@ -206,7 +250,8 @@ export default function PlaygroundPage() {
     const effectiveRight = rightCollapsed ? 0 : rightWidth;
 
     return (
-        <div style={{ minHeight: '100vh', background: 'var(--bg-primary)' }}>
+        <div style={{ minHeight: '100vh', background: 'transparent' }}>
+            <VideoBg />
             <Navbar />
 
             {/* Topic Bar */}
@@ -214,8 +259,8 @@ export default function PlaygroundPage() {
                 display: 'flex', alignItems: 'center', gap: 10,
                 padding: '0 16px',
                 height: 52,
-                background: 'var(--bg-card)',
-                borderBottom: '1px solid var(--border-color)',
+                background: 'var(--panel-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+                borderBottom: '1px solid rgba(255,255,255,0.08)',
                 flexShrink: 0,
             }}>
                 {/* Back */}

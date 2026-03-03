@@ -51,3 +51,12 @@ export const updateEmail = async (req, res, next) => {
         next(err)
     }
 }
+
+export const deleteAccount = async (req, res, next) => {
+    try {
+        const result = await profileService.deleteUserAccount(req.supabase, req.user.id)
+        res.json(result)
+    } catch (err) {
+        next(err)
+    }
+}

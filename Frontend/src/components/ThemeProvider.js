@@ -9,27 +9,17 @@ export function useTheme() {
 }
 
 export default function ThemeProvider({ children }) {
-    const [theme, setTheme] = useState('dark');
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
-        const saved = localStorage.getItem('auralab-theme') || 'dark';
-        setTheme(saved);
-        document.documentElement.classList.toggle('dark', saved === 'dark');
+        document.documentElement.classList.add('dark');
         setMounted(true);
     }, []);
-
-    const toggleTheme = () => {
-        const next = theme === 'dark' ? 'light' : 'dark';
-        setTheme(next);
-        localStorage.setItem('auralab-theme', next);
-        document.documentElement.classList.toggle('dark', next === 'dark');
-    };
 
     if (!mounted) return <div style={{ visibility: 'hidden' }}>{children}</div>;
 
     return (
-        <ThemeContext.Provider value={{ theme, toggleTheme }}>
+        <ThemeContext.Provider value={{ theme: 'dark' }}>
             {children}
         </ThemeContext.Provider>
     );

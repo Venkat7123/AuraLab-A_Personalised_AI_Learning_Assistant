@@ -6,13 +6,15 @@ import {
   createSubject,
   updateSubject,
   deleteSubject,
-  resetSubject
+  resetSubject,
+  translateTopicsForSubject
 } from '../controllers/subject.controller.js'
 
 const router = express.Router()
 
 router.get('/', authMiddleware, getSubjects)
 router.get('/:id', authMiddleware, getSubject)
+router.get('/:id/translate', authMiddleware, translateTopicsForSubject)
 router.post('/', authMiddleware, createSubject)
 router.patch('/:id', authMiddleware, updateSubject)
 router.put('/:id/reset', authMiddleware, resetSubject)

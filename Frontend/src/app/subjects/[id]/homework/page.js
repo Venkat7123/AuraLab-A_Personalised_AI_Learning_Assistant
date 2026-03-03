@@ -4,17 +4,22 @@ import { useState, useEffect, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import {
     ArrowLeft, Send, ImagePlus, Loader2, X, Trash2, Sparkles,
-    MessageSquare, BookOpen, Plus, Clock, User, Bot, ChevronLeft
+    MessageSquare, BookOpen, Plus, Clock, User, Bot, ChevronLeft, Languages
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import { useAuth } from '@/context/AuthContext';
+import { useSubject } from '@/context/SubjectContext';
 import { apiFetch, apiUpload } from '@/utils/api';
+
+const LANG_NAME_MAP = {
+    'en': 'English', 'ta': 'Tamil', 'hi': 'Hindi', 'kn': 'Kannada', 'te': 'Telugu',
+};
 
 export default function HomeworkPage() {
     const params = useParams();
     const router = useRouter();
     const { user, loading: authLoading } = useAuth();
-    const [subject, setSubject] = useState(null);
+    const { subject, language, setLanguage } = useSubject();
     const [mounted, setMounted] = useState(false);
 
     // Chat state
@@ -47,23 +52,14 @@ export default function HomeworkPage() {
         ? accentColors[Math.abs(subject.id?.charCodeAt(0) || 0) % accentColors.length]
         : accentColors[0];
 
-    // Auth + fetch subject
+    // Auth + set mounted
     useEffect(() => {
         if (!authLoading && !user) { router.push('/login'); return; }
-        const id = params?.id;
-        if (!id || !user) return;
-        const fetchSubject = async () => {
-            try {
-                const data = await apiFetch(`/api/subjects/${id}`);
-                setSubject(data);
-                setMounted(true);
-                document.title = `Homework – ${data?.name || 'Subject'} – AuraLab`;
-            } catch {
-                router.push('/dashboard');
-            }
-        };
-        fetchSubject();
-    }, [params?.id, user, authLoading, router]);
+        if (subject) {
+            setMounted(true);
+            document.title = `Homework – ${subject?.name || 'Subject'} – AuraLab`;
+        }
+    }, [user, authLoading, subject, router]);
 
     // Load history and group into sessions
     useEffect(() => {
@@ -147,7 +143,7 @@ export default function HomeworkPage() {
         setSending(true);
         try {
             const data = await apiUpload('/api/scan/homework', fileToUpload, {
-                fields: { question: questionText || '', subject_id: subject.id },
+                fields: { question: questionText || '', subject_id: subject.id, language: language },
             });
             // Use Supabase URL instead of blob URL for persistence
             const permanentImgUrl = data.image_url || imgUrl;
@@ -230,7 +226,38 @@ export default function HomeworkPage() {
         return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
     };
 
-    if (!mounted || !subject) return null;
+    if (!mounted || !subject) return (
+        <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: 'var(--bg-primary)' }}>
+            <Navbar />
+            <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
+                {/* Sidebar Skeleton */}
+                <div style={{ width: 280, borderRight: '1px solid var(--border-color)', padding: 16 }}>
+                    <div className="skeleton skeleton-text" style={{ height: 18, width: '60%', marginBottom: 16 }} />
+                    <div className="skeleton" style={{ height: 42, borderRadius: 10, marginBottom: 16 }} />
+                    {[1, 2, 3].map(i => (
+                        <div key={i} className="skeleton" style={{ height: 52, borderRadius: 8, marginBottom: 8 }} />
+                    ))}
+                </div>
+                {/* Chat Area Skeleton */}
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ borderBottom: '1px solid var(--border-color)', padding: '10px 20px', display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <div className="skeleton" style={{ width: 32, height: 32, borderRadius: 8 }} />
+                        <div style={{ flex: 1 }}>
+                            <div className="skeleton skeleton-text" style={{ height: 16, width: 100, marginBottom: 4 }} />
+                            <div className="skeleton skeleton-text" style={{ height: 10, width: 140, marginBottom: 0 }} />
+                        </div>
+                    </div>
+                    <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <div style={{ textAlign: 'center' }}>
+                            <div className="skeleton skeleton-circle" style={{ width: 80, height: 80, margin: '0 auto 24px', borderRadius: 24 }} />
+                            <div className="skeleton skeleton-text" style={{ height: 22, width: 220, margin: '0 auto 8px' }} />
+                            <div className="skeleton skeleton-text" style={{ height: 14, width: 300, margin: '0 auto' }} />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
 
     return (
         <div
@@ -400,6 +427,32 @@ export default function HomeworkPage() {
                         <div style={{ flex: 1 }}>
                             <h1 style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--text-primary)' }}>Homework</h1>
                             <p style={{ fontSize: '0.675rem', color: 'var(--text-muted)' }}>{subject.name}</p>
+                        </div>
+
+                        {/* Language Selector */}
+                        <div style={{ position: 'relative', flexShrink: 0 }}>
+                            <select
+                                value={language}
+                                onChange={e => setLanguage(e.target.value)}
+                                style={{
+                                    appearance: 'none', WebkitAppearance: 'none',
+                                    padding: '5px 28px 5px 30px',
+                                    borderRadius: 20,
+                                    border: '1px solid var(--border-color)',
+                                    background: 'var(--bg-secondary)',
+                                    color: 'var(--text-primary)',
+                                    fontSize: '0.75rem', fontWeight: 600,
+                                    cursor: 'pointer', outline: 'none',
+                                }}
+                            >
+                                <option value="en">English</option>
+                                <option value="ta">Tamil</option>
+                                <option value="hi">Hindi</option>
+                                <option value="kn">Kannada</option>
+                                <option value="te">Telugu</option>
+                            </select>
+                            <Languages size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--accent)', pointerEvents: 'none' }} />
+                            <ChevronLeft size={11} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%) rotate(-90deg)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
                         </div>
                     </div>
 

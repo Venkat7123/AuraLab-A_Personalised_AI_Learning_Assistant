@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Sparkles, TrendingUp, BookOpen, Search } from 'lucide-react';
+import { Plus, Sparkles, TrendingUp, BookOpen, Search, Loader2 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import StreakGrid from '@/components/StreakGrid';
 import SubjectCard from '@/components/SubjectCard';
@@ -24,6 +24,8 @@ const calcStreak = (data) => {
     return count;
 };
 
+
+
 export default function DashboardPage() {
     const router = useRouter();
     const { user, loading: authLoading } = useAuth();
@@ -33,6 +35,7 @@ export default function DashboardPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [subjectsLoading, setSubjectsLoading] = useState(true);
     const [deleting, setDeleting] = useState(null);
+
 
     const handleDelete = async (id) => {
         setDeleting(id);
@@ -71,10 +74,88 @@ export default function DashboardPage() {
             };
             loadDashboard();
             setMounted(true);
+
         }
     }, [user, authLoading, router]);
 
-    if (authLoading || !mounted) return null;
+    if (authLoading || !mounted) return (
+        <div style={{ minHeight: '100vh', background: 'transparent' }}>
+            <Navbar />
+            <main style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px' }}>
+                <div style={{ marginBottom: 40 }}>
+                    <div className="skeleton skeleton-text" style={{ height: 36, width: 280, marginBottom: 12 }} />
+                    <div className="skeleton skeleton-text" style={{ height: 16, width: 240 }} />
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 32 }}>
+                    {[1, 2, 3].map(i => (
+                        <div key={i} className="skeleton skeleton-card" style={{ padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 16 }}>
+                            <div className="skeleton skeleton-circle" style={{ width: 44, height: 44, flexShrink: 0 }} />
+                            <div style={{ flex: 1 }}>
+                                <div className="skeleton skeleton-text" style={{ height: 22, width: '50%', marginBottom: 6 }} />
+                                <div className="skeleton skeleton-text" style={{ height: 12, width: '70%', marginBottom: 0 }} />
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            </main>
+        </div>
+    );
+
+    if (subjectsLoading) {
+        return (
+            <div style={{ minHeight: '100vh', background: 'transparent' }}>
+                <Navbar />
+                <main style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px' }}>
+                    {/* Hero Skeleton */}
+                    <div style={{ marginBottom: 40 }}>
+                        <div className="skeleton skeleton-text" style={{ height: 36, width: 280, marginBottom: 12 }} />
+                        <div className="skeleton skeleton-text" style={{ height: 16, width: 240 }} />
+                    </div>
+
+                    {/* Stats Skeleton */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 32 }}>
+                        {[1, 2, 3].map(i => (
+                            <div key={i} className="skeleton skeleton-card" style={{ padding: '20px 24px', display: 'flex', alignItems: 'center', gap: 16 }}>
+                                <div className="skeleton skeleton-circle" style={{ width: 44, height: 44, flexShrink: 0 }} />
+                                <div style={{ flex: 1 }}>
+                                    <div className="skeleton skeleton-text" style={{ height: 22, width: '50%', marginBottom: 6 }} />
+                                    <div className="skeleton skeleton-text" style={{ height: 12, width: '70%', marginBottom: 0 }} />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Streak Grid Skeleton */}
+                    <div className="skeleton skeleton-card" style={{ padding: 24, marginBottom: 32 }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 16 }}>
+                            <div className="skeleton skeleton-text" style={{ height: 16, width: 140 }} />
+                            <div className="skeleton skeleton-text" style={{ height: 14, width: 100 }} />
+                        </div>
+                        <div className="skeleton" style={{ height: 110, borderRadius: 8 }} />
+                    </div>
+
+                    {/* Subject Cards Skeleton */}
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
+                        <div className="skeleton skeleton-text" style={{ height: 22, width: 140 }} />
+                        <div className="skeleton" style={{ height: 38, width: 140, borderRadius: 8 }} />
+                    </div>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: 20 }}>
+                        {[1, 2, 3].map(i => (
+                            <div key={i} className="skeleton skeleton-card" style={{ padding: 0, overflow: 'hidden' }}>
+                                <div className="skeleton" style={{ height: 140, borderRadius: 0 }} />
+                                <div style={{ padding: 20 }}>
+                                    <div className="skeleton skeleton-text" style={{ height: 18, width: '70%', marginBottom: 10 }} />
+                                    <div className="skeleton skeleton-text" style={{ height: 12, width: '50%', marginBottom: 16 }} />
+                                    <div className="skeleton" style={{ height: 8, borderRadius: 4, marginBottom: 8 }} />
+                                    <div className="skeleton skeleton-text" style={{ height: 12, width: '35%', marginBottom: 0 }} />
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </main>
+            </div>
+        );
+    }
 
     const displayName = user?.user_metadata?.name || user?.email?.split('@')[0] || 'Learner';
 
@@ -84,7 +165,7 @@ export default function DashboardPage() {
     }, 0);
 
     return (
-        <div style={{ minHeight: '100vh', background: 'var(--bg-primary)' }}>
+        <div style={{ minHeight: '100vh', background: 'transparent' }}>
             <Navbar />
 
             <main style={{ maxWidth: 1200, margin: '0 auto', padding: '32px 24px' }}>
@@ -103,6 +184,8 @@ export default function DashboardPage() {
                         fontSize: '1.0625rem',
                         color: 'var(--text-secondary)',
                     }}>Ready to continue your learning journey?</p>
+
+
                 </div>
 
                 {/* Stats Row */}
@@ -166,7 +249,7 @@ export default function DashboardPage() {
                         <span style={{
                             fontSize: '0.8125rem',
                             color: 'var(--text-muted)',
-                        }}>Last 26 weeks</span>
+                        }}>Last 12 months</span>
                     </div>
                     <StreakGrid />
                 </div>
