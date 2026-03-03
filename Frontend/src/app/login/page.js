@@ -136,29 +136,15 @@ export default function LoginPage() {
                 padding: '40px 24px',
                 background: 'var(--bg-primary)',
             }}>
-                <div className="animate-fade-in" style={{ width: '100%', maxWidth: 420 }}>
+                <div className="animate-fade-in w-full max-w-[420px] px-2 md:px-0">
                     {/* Mobile logo */}
-                    <div className="md:hidden" style={{ textAlign: 'center', marginBottom: 32 }}>
+                    <div className="md:hidden text-center mb-6">
                         <img
                             src="/logo.png"
                             alt="AuraLab Logo"
-                            style={{
-                                width: 56,
-                                height: 56,
-                                borderRadius: 14,
-                                objectFit: 'cover',
-                                marginBottom: 12,
-                                display: 'block',
-                                margin: '0 auto 12px',
-                            }}
+                            className="w-10 h-10 mx-auto rounded-xl object-cover mb-3 block"
                         />
-                        <h2 className="gradient-text" style={{
-                            fontSize: '1.75rem',
-                            fontWeight: 700,
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                        }}>AuraLab</h2>
+                        <h2 className="gradient-text text-2xl font-bold flex items-center justify-center">AuraLab</h2>
                     </div>
 
                     <h2 style={{

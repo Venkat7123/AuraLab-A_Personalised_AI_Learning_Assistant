@@ -12,7 +12,7 @@
   <img src="https://img.shields.io/badge/Next.js-16-black?logo=nextdotjs" />
   <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react" />
   <img src="https://img.shields.io/badge/Express-5-000000?logo=express" />
-  <img src="https://img.shields.io/badge/Gemini_AI-2.0-4285F4?logo=google" />
+  <img src="https://img.shields.io/badge/Gemini_AI-2.5-4285F4?logo=google" />
   <img src="https://img.shields.io/badge/Supabase-Auth_%26_DB-3ECF8E?logo=supabase" />
 </p>
 
@@ -52,7 +52,7 @@
 |---|---|
 | **Frontend** | Next.js 16, React 19, Tailwind CSS 4, Lucide Icons |
 | **Backend** | Express 5 (ES Modules), Node.js |
-| **AI Engine** | Google Gemini 2.0 Flash (dual API key rotation with fallback) |
+| **AI Engine** | Google Gemini 2.5 Flash (dual API key rotation with fallback) |
 | **Database** | Supabase (PostgreSQL + Row Level Security) |
 | **Auth** | Supabase Auth (Email/Password + Google OAuth) |
 | **Storage** | Supabase Storage (images, PDFs) |

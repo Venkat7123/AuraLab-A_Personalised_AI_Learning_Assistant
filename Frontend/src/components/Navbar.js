@@ -91,16 +91,14 @@ export default function Navbar() {
                 <img
                     src="/logo.png"
                     alt="AuraLab Logo"
+                    className="w-8 h-8 md:w-[38px] md:h-[38px]"
                     style={{
-                        width: 38,
-                        height: 38,
                         borderRadius: 9,
                         objectFit: 'cover',
                         flexShrink: 0,
                     }}
                 />
-                <span style={{
-                    fontSize: '1.75rem',
+                <span className="text-xl md:text-2xl" style={{
                     fontWeight: 700,
                     display: 'flex',
                     alignItems: 'center',
@@ -109,7 +107,7 @@ export default function Navbar() {
                     WebkitTextFillColor: 'transparent',
                     backgroundClip: 'text',
                     letterSpacing: '-0.02em',
-                    marginTop: '7px',
+                    marginTop: '2px',
                 }}>AuraLab</span>
             </a>
 
