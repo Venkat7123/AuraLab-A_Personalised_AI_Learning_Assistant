@@ -313,10 +313,11 @@ export default function HomeworkPage() {
             <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
 
                 {/* ── Left Sidebar: Chat History ─── */}
-                <div className={`flex flex-col border-r border-gray-800 transition-all duration-300 z-40 ${isMobile && sidebarOpen ? 'absolute inset-y-0 left-0 bg-gray-900 shadow-xl' : ''}`} style={{
+                <div className={`flex flex-col transition-all duration-300 z-40 ${isMobile && sidebarOpen ? 'absolute inset-y-0 left-0 bg-gray-900 shadow-xl' : ''}`} style={{
                     width: sidebarOpen ? 280 : 0,
                     minWidth: sidebarOpen ? 280 : 0,
-                    background: 'var(--glass-bg)',
+                    background: 'var(--bg-secondary)',
+                    borderRight: (!isMobile && sidebarOpen) ? '1px solid var(--border-color)' : 'none',
                     overflow: 'hidden',
                     flexShrink: 0,
                 }}>
