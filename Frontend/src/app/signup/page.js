@@ -52,17 +52,7 @@ export default function SignupPage() {
     return (
         <div style={{ display: 'flex', minHeight: '100vh' }}>
             {/* Left — Illustration */}
-            <div style={{
-                flex: 1,
-                position: 'relative',
-                overflow: 'hidden',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4c1d95 100%)',
-            }}
-                className="hidden md:flex"
-            >
+            <div className="hidden md:flex flex-1 relative overflow-hidden items-center justify-center bg-gradient-to-br from-indigo-950 via-indigo-900 to-purple-900">
                 <div className="auth-bg-pattern" />
                 <div style={{
                     position: 'relative',

@@ -30,6 +30,7 @@ export default function HomeworkPage() {
     const [sending, setSending] = useState(false);
     const [dragOver, setDragOver] = useState(false);
     const [sidebarOpen, setSidebarOpen] = useState(true);
+    const [isMobile, setIsMobile] = useState(false);
 
     // Chat sessions (grouped from history)
     const [sessions, setSessions] = useState([]);
@@ -60,6 +61,20 @@ export default function HomeworkPage() {
             document.title = `Homework – ${subject?.name || 'Subject'} – AuraLab`;
         }
     }, [user, authLoading, subject, router]);
+
+    // Mobile detection and sidebar state
+    useEffect(() => {
+        if (typeof window !== 'undefined') {
+            const checkMobile = () => {
+                const mobile = window.innerWidth <= 768;
+                setIsMobile(mobile);
+                setSidebarOpen(!mobile); // Close sidebar by default on mobile
+            };
+            checkMobile(); // Initial check
+            window.addEventListener('resize', checkMobile);
+            return () => window.removeEventListener('resize', checkMobile);
+        }
+    }, []); // Run once on mount
 
     // Load history and group into sessions
     useEffect(() => {
@@ -298,401 +313,387 @@ export default function HomeworkPage() {
             <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
 
                 {/* ── Left Sidebar: Chat History ─── */}
-                <div style={{
+                <div className={`flex flex-col border-r border-gray-800 transition-all duration-300 z-40 ${isMobile && sidebarOpen ? 'absolute inset-y-0 left-0 bg-gray-900 shadow-xl' : ''}`} style={{
                     width: sidebarOpen ? 280 : 0,
                     minWidth: sidebarOpen ? 280 : 0,
-                    background: 'var(--bg-secondary)',
-                    borderRight: sidebarOpen ? '1px solid var(--border-color)' : 'none',
-                    display: 'flex', flexDirection: 'column',
-                    transition: 'all 0.25s ease',
+                    background: 'var(--glass-bg)',
                     overflow: 'hidden',
                     flexShrink: 0,
                 }}>
                     {/* Sidebar Header */}
-                    <div style={{
-                        padding: '16px', borderBottom: '1px solid var(--border-color)',
-                        display: 'flex', alignItems: 'center', gap: 8,
-                    }}>
-                        <BookOpen size={16} style={{ color: colors[0] }} />
-                        <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--text-primary)', flex: 1 }}>
-                            Chat History
-                        </span>
-                        <button onClick={() => setSidebarOpen(false)} className="btn-ghost"
-                            style={{ padding: 4, color: 'var(--text-muted)' }}>
-                            <ChevronLeft size={16} />
-                        </button>
-                    </div>
-
-                    {/* New Chat Button */}
-                    <div style={{ padding: '12px 12px 4px' }}>
-                        <button onClick={handleNewChat} style={{
-                            width: '100%', padding: '10px 14px', borderRadius: 10,
-                            border: `1px dashed ${colors[0]}40`,
-                            background: `${colors[0]}06`,
-                            color: colors[0],
-                            fontSize: '0.8125rem', fontWeight: 600,
-                            display: 'flex', alignItems: 'center', gap: 8,
-                            cursor: 'pointer', transition: 'all 0.2s',
-                        }}
-                            onMouseEnter={e => e.currentTarget.style.background = `${colors[0]}12`}
-                            onMouseLeave={e => e.currentTarget.style.background = `${colors[0]}06`}
-                        >
-                            <Plus size={16} /> New Chat
-                        </button>
-                    </div>
-
-                    {/* Session List */}
-                    <div style={{ flex: 1, overflowY: 'auto', padding: '8px 12px' }}>
-                        {sessions.length === 0 ? (
-                            <div style={{ textAlign: 'center', padding: '40px 16px', color: 'var(--text-muted)' }}>
-                                <Clock size={24} style={{ margin: '0 auto 8px', opacity: 0.4 }} />
-                                <p style={{ fontSize: '0.75rem' }}>No chats yet</p>
-                            </div>
-                        ) : (
-                            sessions.map((session, i) => (
-                                <button key={i} onClick={() => handleSessionClick(i)} style={{
-                                    width: '100%', textAlign: 'left', padding: '10px 12px',
-                                    borderRadius: 8, marginBottom: 4, cursor: 'pointer',
-                                    border: 'none',
-                                    background: activeSessionIdx === i ? `${colors[0]}12` : 'transparent',
-                                    transition: 'all 0.15s',
-                                }}
-                                    onMouseEnter={e => { if (activeSessionIdx !== i) e.currentTarget.style.background = 'var(--bg-primary)'; }}
-                                    onMouseLeave={e => { if (activeSessionIdx !== i) e.currentTarget.style.background = 'transparent'; }}
-                                >
-                                    <p style={{
-                                        fontSize: '0.8rem', fontWeight: activeSessionIdx === i ? 600 : 400,
-                                        color: activeSessionIdx === i ? colors[0] : 'var(--text-primary)',
-                                        whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                                        marginBottom: 2,
-                                    }}>
-                                        {session.title || 'Homework scan'}
-                                    </p>
-                                    <p style={{ fontSize: '0.675rem', color: 'var(--text-muted)' }}>
-                                        {formatTime(session.time)}
-                                    </p>
-                                </button>
-                            ))
-                        )}
-                    </div>
-
-                    {/* Clear History */}
-                    {sessions.length > 0 && (
-                        <div style={{ padding: '8px 12px 12px', borderTop: '1px solid var(--border-color)' }}>
-                            <button onClick={handleClearHistory} style={{
-                                width: '100%', padding: '8px', borderRadius: 8, border: 'none',
-                                background: 'transparent', color: '#ef4444', fontSize: '0.75rem',
-                                fontWeight: 500, cursor: 'pointer', display: 'flex',
-                                alignItems: 'center', gap: 6, justifyContent: 'center',
-                                transition: 'background 0.15s',
-                            }}
-                                onMouseEnter={e => e.currentTarget.style.background = '#ef444410'}
-                                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                            >
-                                <Trash2 size={13} /> Clear All History
-                            </button>
-                        </div>
-                    )}
-                </div>
-
-                {/* ── Main Chat Area ─── */}
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-
-                    {/* Top Header */}
-                    <div style={{
-                        borderBottom: '1px solid var(--border-color)',
-                        background: 'var(--bg-secondary)',
-                        flexShrink: 0,
-                        padding: '10px 20px',
-                        display: 'flex', alignItems: 'center', gap: 10,
-                    }}>
-                        {!sidebarOpen && (
-                            <button className="btn-ghost" onClick={() => setSidebarOpen(true)}
-                                style={{ padding: 6, color: 'var(--text-muted)', marginRight: 2 }}>
-                                <BookOpen size={16} />
-                            </button>
-                        )}
-                        <button className="btn-ghost" onClick={() => router.push(`/subjects/${subject.id}`)}
-                            style={{ padding: '4px 6px' }}>
-                            <ArrowLeft size={16} />
-                        </button>
-                        <div style={{
-                            width: 32, height: 32, borderRadius: 8,
-                            background: `linear-gradient(135deg, ${colors[0]}, ${colors[1]})`,
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            flexShrink: 0,
-                        }}>
-                            <BookOpen size={14} style={{ color: '#fff' }} />
-                        </div>
-                        <div style={{ flex: 1 }}>
-                            <h1 style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--text-primary)' }}>Homework</h1>
-                            <p style={{ fontSize: '0.675rem', color: 'var(--text-muted)' }}>{subject.name}</p>
-                        </div>
-
-                        {/* Language Selector */}
-                        <div style={{ position: 'relative', flexShrink: 0 }}>
-                            <select
-                                value={language}
-                                onChange={e => setLanguage(e.target.value)}
-                                style={{
-                                    appearance: 'none', WebkitAppearance: 'none',
-                                    padding: '5px 28px 5px 30px',
-                                    borderRadius: 20,
-                                    border: '1px solid var(--border-color)',
-                                    background: 'var(--bg-secondary)',
-                                    color: 'var(--text-primary)',
-                                    fontSize: '0.75rem', fontWeight: 600,
-                                    cursor: 'pointer', outline: 'none',
-                                }}
-                            >
-                                <option value="en">English</option>
-                                <option value="ta">Tamil</option>
-                                <option value="hi">Hindi</option>
-                                <option value="kn">Kannada</option>
-                                <option value="te">Telugu</option>
-                            </select>
-                            <Languages size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--accent)', pointerEvents: 'none' }} />
-                            <ChevronLeft size={11} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%) rotate(-90deg)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
-                        </div>
-                    </div>
-
-                    {/* Chat Messages */}
-                    <div style={{ flex: 1, overflowY: 'auto', padding: '24px 20px' }}>
-                        <div style={{ maxWidth: 780, margin: '0 auto' }}>
-                            {/* Empty State */}
-                            {messages.length === 0 && !sending && (
-                                <div style={{ textAlign: 'center', padding: '80px 24px' }}>
-                                    <div style={{
-                                        width: 80, height: 80, borderRadius: 24,
-                                        background: `linear-gradient(135deg, ${colors[0]}15, ${colors[1]}15)`,
-                                        border: `2px solid ${colors[0]}20`,
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        margin: '0 auto 24px',
-                                    }}>
-                                        <ImagePlus size={36} style={{ color: colors[0] }} />
-                                    </div>
-                                    <p style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8, fontSize: '1.375rem' }}>
-                                        Upload Your Homework
-                                    </p>
-                                    <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', maxWidth: 420, margin: '0 auto', lineHeight: 1.7 }}>
-                                        Drag & drop an image anywhere, or use the
-                                        <ImagePlus size={14} style={{ verticalAlign: 'middle', margin: '0 4px', color: colors[0] }} />
-                                        button below. Ask a question and get step-by-step solutions.
-                                    </p>
-                                </div>
-                            )}
-
-                            {/* Messages */}
-                            {messages.map((msg, i) => (
-                                <div key={i} className="animate-slide-up"
-                                    style={{
-                                        marginBottom: 24, display: 'flex', gap: 12, alignItems: 'flex-start',
-                                        flexDirection: msg.role === 'user' ? 'row-reverse' : 'row',
-                                    }}>
-
-                                    {/* Avatar */}
-                                    <div style={{
-                                        width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        background: msg.role === 'user'
-                                            ? `linear-gradient(135deg, ${colors[0]}, ${colors[1]})`
-                                            : 'linear-gradient(135deg, #10b981, #14b8a6)',
-                                        boxShadow: msg.role === 'user'
-                                            ? `0 2px 8px ${colors[0]}30`
-                                            : '0 2px 8px rgba(16,185,129,0.3)',
-                                        marginTop: 2,
-                                    }}>
-                                        {msg.role === 'user'
-                                            ? <span style={{ color: '#fff', fontSize: '0.8rem', fontWeight: 700 }}>{getInitials()}</span>
-                                            : <Bot size={18} style={{ color: '#fff' }} />
-                                        }
-                                    </div>
-
-                                    {/* Message Content */}
-                                    <div style={{ flex: 1, minWidth: 0 }}>
-                                        {/* Name */}
-                                        <div style={{
-                                            fontSize: '0.75rem', fontWeight: 600, marginBottom: 6,
-                                            color: msg.role === 'user' ? colors[0] : '#10b981',
-                                            textAlign: msg.role === 'user' ? 'right' : 'left',
-                                        }}>
-                                            {msg.role === 'user' ? 'You' : 'AuraLab AI Tutor'}
-                                        </div>
-
-                                        {msg.role === 'user' ? (
-                                            /* ── User Message ── */
-                                            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-                                                {msg.imageUrl && (
-                                                    <div style={{
-                                                        borderRadius: 12, overflow: 'hidden',
-                                                        border: `2px solid ${colors[0]}`,
-                                                        marginBottom: msg.text ? 8 : 0,
-                                                        maxWidth: 340,
-                                                    }}>
-                                                        <img src={msg.imageUrl} alt="Homework" style={{
-                                                            width: '100%', display: 'block',
-                                                            maxHeight: 280, objectFit: 'contain',
-                                                            background: 'var(--bg-secondary)',
-                                                        }} />
-                                                    </div>
-                                                )}
-                                                {msg.text && (
-                                                    <div style={{
-                                                        padding: '10px 14px', borderRadius: 12,
-                                                        borderBottomRightRadius: 4,
-                                                        background: `linear-gradient(135deg, ${colors[0]}, ${colors[1]})`,
-                                                        fontSize: '0.875rem', color: '#fff',
-                                                        lineHeight: 1.5, maxWidth: 400,
-                                                    }}>
-                                                        {msg.text}
-                                                    </div>
-                                                )}
-                                            </div>
-                                        ) : (
-                                            /* ── AI Response ── */
-                                            <div style={{
-                                                background: 'var(--bg-secondary)',
-                                                border: '1px solid var(--border-color)',
-                                                borderRadius: 16,
-                                                padding: '20px 24px',
-                                                position: 'relative',
-                                                overflow: 'hidden',
-                                            }}>
-                                                {/* Accent top border */}
-                                                <div style={{
-                                                    position: 'absolute', top: 0, left: 0, right: 0, height: 3,
-                                                    background: 'linear-gradient(90deg, #10b981, #14b8a6, #06b6d4)',
-                                                }} />
-                                                <div
-                                                    className="ai-response-content"
-                                                    dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.text) }}
-                                                />
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            ))}
-
-                            {/* Loading */}
-                            {sending && (
-                                <div className="animate-fade-in" style={{ display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: 24 }}>
-                                    <div style={{
-                                        width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        background: 'linear-gradient(135deg, #10b981, #14b8a6)',
-                                        boxShadow: '0 2px 8px rgba(16,185,129,0.3)',
-                                    }}>
-                                        <Bot size={18} style={{ color: '#fff' }} />
-                                    </div>
-                                    <div style={{ flex: 1 }}>
-                                        <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#10b981', marginBottom: 6 }}>
-                                            AuraLab AI Tutor
-                                        </div>
-                                        <div style={{
-                                            background: 'var(--bg-secondary)',
-                                            border: '1px solid var(--border-color)',
-                                            borderRadius: 16, padding: '16px 20px',
-                                            display: 'flex', alignItems: 'center', gap: 10,
-                                        }}>
-                                            <Loader2 size={16} className="spin" style={{ color: '#10b981' }} />
-                                            <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
-                                                Analyzing your homework...
-                                            </span>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                            <div ref={chatEndRef} />
-                        </div>
-                    </div>
-
-                    {/* ── Bottom Input Bar ─── */}
-                    <div style={{
-                        borderTop: '1px solid var(--border-color)',
-                        background: 'var(--bg-secondary)',
-                        padding: '12px 20px',
-                        flexShrink: 0,
-                    }}>
-                        <div style={{ maxWidth: 780, margin: '0 auto' }}>
-                            {/* Image Preview */}
-                            {preview && (
-                                <div className="animate-slide-up" style={{
-                                    marginBottom: 10, display: 'flex', alignItems: 'center', gap: 10,
-                                    padding: '8px 10px', background: 'var(--bg-primary)',
-                                    borderRadius: 10, border: '1px solid var(--border-color)',
-                                }}>
-                                    <img src={preview} alt="Preview" style={{
-                                        width: 56, height: 40, objectFit: 'cover',
-                                        borderRadius: 6, border: '1px solid var(--border-color)',
-                                    }} />
-                                    <div style={{ flex: 1, minWidth: 0 }}>
-                                        <p style={{
-                                            fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)',
-                                            whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
-                                        }}>{image?.name}</p>
-                                        <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
-                                            {(image?.size / 1024).toFixed(1)} KB
-                                        </p>
-                                    </div>
-                                    <button className="btn-ghost" onClick={clearPreview}
-                                        style={{ padding: 4, color: '#ef4444', flexShrink: 0 }}>
-                                        <X size={14} />
-                                    </button>
-                                </div>
-                            )}
-                            {/* Input Row: Image + Text + Send */}
-                            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                                <input type="file" accept="image/*" ref={fileRef}
-                                    onChange={(e) => handleFileSelect(e.target.files[0])}
-                                    style={{ display: 'none' }} />
-                                <button onClick={() => !sending && fileRef.current?.click()}
-                                    disabled={sending} title="Attach image"
-                                    style={{
-                                        width: 42, height: 42, borderRadius: 10,
-                                        border: preview ? `2px solid ${colors[0]}` : '1px solid var(--border-color)',
-                                        background: preview ? `${colors[0]}10` : 'var(--bg-primary)',
-                                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        cursor: sending ? 'not-allowed' : 'pointer',
-                                        flexShrink: 0, transition: 'all 0.2s',
-                                        opacity: sending ? 0.5 : 1,
-                                        color: preview ? colors[0] : 'var(--text-muted)',
-                                    }}>
-                                    <ImagePlus size={18} />
-                                </button>
-                                <input ref={inputRef} type="text" value={question}
-                                    onChange={(e) => setQuestion(e.target.value)}
-                                    onKeyDown={(e) => { if (e.key === 'Enter' && image && !sending) handleSend(); }}
-                                    placeholder={image ? "Ask about your homework..." : "Attach an image, then ask..."}
-                                    disabled={sending}
-                                    style={{
-                                        flex: 1, padding: '10px 16px', borderRadius: 10,
-                                        border: '1px solid var(--border-color)',
-                                        background: 'var(--bg-primary)', color: 'var(--text-primary)',
-                                        fontSize: '0.875rem', outline: 'none',
-                                        transition: 'border-color 0.2s', opacity: sending ? 0.5 : 1,
-                                    }}
-                                    onFocus={(e) => e.target.style.borderColor = colors[0]}
-                                    onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
-                                />
-                                <button className="btn-primary" onClick={handleSend}
-                                    disabled={!image || sending}
-                                    style={{
-                                        width: 42, height: 42, borderRadius: 10,
-                                        background: `linear-gradient(135deg, ${colors[0]}, ${colors[1]})`,
-                                        opacity: (!image || sending) ? 0.5 : 1,
-                                        flexShrink: 0, display: 'flex', alignItems: 'center',
-                                        justifyContent: 'center', padding: 0,
-                                    }}>
-                                    {sending ? <Loader2 size={16} className="spin" /> : <Send size={16} />}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                </button>
             </div>
 
-            {/* AI Response Styles */}
-            <style>{`
+            {/* New Chat Button */}
+            <div style={{ padding: '12px 12px 4px' }}>
+                <button onClick={handleNewChat} style={{
+                    width: '100%', padding: '10px 14px', borderRadius: 10,
+                    border: `1px dashed ${colors[0]}40`,
+                    background: `${colors[0]}06`,
+                    color: colors[0],
+                    fontSize: '0.8125rem', fontWeight: 600,
+                    display: 'flex', alignItems: 'center', gap: 8,
+                    cursor: 'pointer', transition: 'all 0.2s',
+                }}
+                    onMouseEnter={e => e.currentTarget.style.background = `${colors[0]}12`}
+                    onMouseLeave={e => e.currentTarget.style.background = `${colors[0]}06`}
+                >
+                    <Plus size={16} /> New Chat
+                </button>
+            </div>
+
+            {/* Session List */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '8px 12px' }}>
+                {sessions.length === 0 ? (
+                    <div style={{ textAlign: 'center', padding: '40px 16px', color: 'var(--text-muted)' }}>
+                        <Clock size={24} style={{ margin: '0 auto 8px', opacity: 0.4 }} />
+                        <p style={{ fontSize: '0.75rem' }}>No chats yet</p>
+                    </div>
+                ) : (
+                    sessions.map((session, i) => (
+                        <button key={i} onClick={() => { handleSessionClick(i); if (isMobile) setSidebarOpen(false); }} style={{
+                            width: '100%', textAlign: 'left', padding: '10px 12px',
+                            borderRadius: 8, marginBottom: 4, cursor: 'pointer',
+                            border: 'none',
+                            background: activeSessionIdx === i ? `${colors[0]}12` : 'transparent',
+                            transition: 'all 0.15s',
+                        }}
+                            onMouseEnter={e => { if (activeSessionIdx !== i) e.currentTarget.style.background = 'var(--bg-primary)'; }}
+                            onMouseLeave={e => { if (activeSessionIdx !== i) e.currentTarget.style.background = 'transparent'; }}
+                        >
+                            <p style={{
+                                fontSize: '0.8rem', fontWeight: activeSessionIdx === i ? 600 : 400,
+                                color: activeSessionIdx === i ? colors[0] : 'var(--text-primary)',
+                                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                                marginBottom: 2,
+                            }}>
+                                {session.title || 'Homework scan'}
+                            </p>
+                            <p style={{ fontSize: '0.675rem', color: 'var(--text-muted)' }}>
+                                {formatTime(session.time)}
+                            </p>
+                        </button>
+                    ))
+                )}
+            </div>
+
+            {/* Clear History */}
+            {sessions.length > 0 && (
+                <div style={{ padding: '8px 12px 12px', borderTop: '1px solid var(--border-color)' }}>
+                    <button onClick={handleClearHistory} style={{
+                        width: '100%', padding: '8px', borderRadius: 8, border: 'none',
+                        background: 'transparent', color: '#ef4444', fontSize: '0.75rem',
+                        fontWeight: 500, cursor: 'pointer', display: 'flex',
+                        alignItems: 'center', gap: 6, justifyContent: 'center',
+                        transition: 'background 0.15s',
+                    }}
+                        onMouseEnter={e => e.currentTarget.style.background = '#ef444410'}
+                        onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                    >
+                        <Trash2 size={13} /> Clear All History
+                    </button>
+                </div>
+            )}
+        </div>
+
+                {/* ── Main Chat Area ─── */ }
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+
+        {/* Top Header */}
+        <div style={{
+            borderBottom: '1px solid var(--border-color)',
+            background: 'var(--bg-secondary)',
+            flexShrink: 0,
+            padding: '10px 20px',
+            display: 'flex', alignItems: 'center', gap: 10,
+        }}>
+            {!sidebarOpen && (
+                <button className="btn-ghost" onClick={() => setSidebarOpen(true)}
+                    style={{ padding: 6, color: 'var(--text-muted)', marginRight: 2 }}>
+                    <BookOpen size={16} />
+                </button>
+            )}
+            <button className="btn-ghost" onClick={() => router.push(`/subjects/${subject.id}`)}
+                style={{ padding: '4px 6px' }}>
+                <ArrowLeft size={16} />
+            </button>
+            <div style={{
+                width: 32, height: 32, borderRadius: 8,
+                background: `linear-gradient(135deg, ${colors[0]}, ${colors[1]})`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0,
+            }}>
+                <BookOpen size={14} style={{ color: '#fff' }} />
+            </div>
+            <div style={{ flex: 1 }}>
+                <h1 style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--text-primary)' }}>Homework</h1>
+                <p style={{ fontSize: '0.675rem', color: 'var(--text-muted)' }}>{subject.name}</p>
+            </div>
+
+            {/* Language Selector */}
+            <div style={{ position: 'relative', flexShrink: 0 }}>
+                <select
+                    value={language}
+                    onChange={e => setLanguage(e.target.value)}
+                    style={{
+                        appearance: 'none', WebkitAppearance: 'none',
+                        padding: '5px 28px 5px 30px',
+                        borderRadius: 20,
+                        border: '1px solid var(--border-color)',
+                        background: 'var(--bg-secondary)',
+                        color: 'var(--text-primary)',
+                        fontSize: '0.75rem', fontWeight: 600,
+                        cursor: 'pointer', outline: 'none',
+                    }}
+                >
+                    <option value="en">English</option>
+                    <option value="ta">Tamil</option>
+                    <option value="hi">Hindi</option>
+                    <option value="kn">Kannada</option>
+                    <option value="te">Telugu</option>
+                </select>
+                <Languages size={13} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--accent)', pointerEvents: 'none' }} />
+                <ChevronLeft size={11} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%) rotate(-90deg)', color: 'var(--text-muted)', pointerEvents: 'none' }} />
+            </div>
+        </div>
+
+        {/* Chat Messages */}
+        <div style={{ flex: 1, overflowY: 'auto', padding: '24px 20px' }}>
+            <div style={{ maxWidth: 780, margin: '0 auto' }}>
+                {/* Empty State */}
+                {messages.length === 0 && !sending && (
+                    <div style={{ textAlign: 'center', padding: '80px 24px' }}>
+                        <div style={{
+                            width: 80, height: 80, borderRadius: 24,
+                            background: `linear-gradient(135deg, ${colors[0]}15, ${colors[1]}15)`,
+                            border: `2px solid ${colors[0]}20`,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            margin: '0 auto 24px',
+                        }}>
+                            <ImagePlus size={36} style={{ color: colors[0] }} />
+                        </div>
+                        <p style={{ fontWeight: 700, color: 'var(--text-primary)', marginBottom: 8, fontSize: '1.375rem' }}>
+                            Upload Your Homework
+                        </p>
+                        <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', maxWidth: 420, margin: '0 auto', lineHeight: 1.7 }}>
+                            Drag & drop an image anywhere, or use the
+                            <ImagePlus size={14} style={{ verticalAlign: 'middle', margin: '0 4px', color: colors[0] }} />
+                            button below. Ask a question and get step-by-step solutions.
+                        </p>
+                    </div>
+                )}
+
+                {/* Messages */}
+                {messages.map((msg, i) => (
+                    <div key={i} className="animate-slide-up"
+                        style={{
+                            marginBottom: 24, display: 'flex', gap: 12, alignItems: 'flex-start',
+                            flexDirection: msg.role === 'user' ? 'row-reverse' : 'row',
+                        }}>
+
+                        {/* Avatar */}
+                        <div style={{
+                            width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            background: msg.role === 'user'
+                                ? `linear-gradient(135deg, ${colors[0]}, ${colors[1]})`
+                                : 'linear-gradient(135deg, #10b981, #14b8a6)',
+                            boxShadow: msg.role === 'user'
+                                ? `0 2px 8px ${colors[0]}30`
+                                : '0 2px 8px rgba(16,185,129,0.3)',
+                            marginTop: 2,
+                        }}>
+                            {msg.role === 'user'
+                                ? <span style={{ color: '#fff', fontSize: '0.8rem', fontWeight: 700 }}>{getInitials()}</span>
+                                : <Bot size={18} style={{ color: '#fff' }} />
+                            }
+                        </div>
+
+                        {/* Message Content */}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                            {/* Name */}
+                            <div style={{
+                                fontSize: '0.75rem', fontWeight: 600, marginBottom: 6,
+                                color: msg.role === 'user' ? colors[0] : '#10b981',
+                                textAlign: msg.role === 'user' ? 'right' : 'left',
+                            }}>
+                                {msg.role === 'user' ? 'You' : 'AuraLab AI Tutor'}
+                            </div>
+
+                            {msg.role === 'user' ? (
+                                /* ── User Message ── */
+                                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                                    {msg.imageUrl && (
+                                        <div style={{
+                                            borderRadius: 12, overflow: 'hidden',
+                                            border: `2px solid ${colors[0]}`,
+                                            marginBottom: msg.text ? 8 : 0,
+                                            maxWidth: 340,
+                                        }}>
+                                            <img src={msg.imageUrl} alt="Homework" style={{
+                                                width: '100%', display: 'block',
+                                                maxHeight: 280, objectFit: 'contain',
+                                                background: 'var(--bg-secondary)',
+                                            }} />
+                                        </div>
+                                    )}
+                                    {msg.text && (
+                                        <div style={{
+                                            padding: '10px 14px', borderRadius: 12,
+                                            borderBottomRightRadius: 4,
+                                            background: `linear-gradient(135deg, ${colors[0]}, ${colors[1]})`,
+                                            fontSize: '0.875rem', color: '#fff',
+                                            lineHeight: 1.5, maxWidth: 400,
+                                        }}>
+                                            {msg.text}
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                /* ── AI Response ── */
+                                <div style={{
+                                    background: 'var(--bg-secondary)',
+                                    border: '1px solid var(--border-color)',
+                                    borderRadius: 16,
+                                    padding: '20px 24px',
+                                    position: 'relative',
+                                    overflow: 'hidden',
+                                }}>
+                                    {/* Accent top border */}
+                                    <div style={{
+                                        position: 'absolute', top: 0, left: 0, right: 0, height: 3,
+                                        background: 'linear-gradient(90deg, #10b981, #14b8a6, #06b6d4)',
+                                    }} />
+                                    <div
+                                        className="ai-response-content"
+                                        dangerouslySetInnerHTML={{ __html: renderMarkdown(msg.text) }}
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                ))}
+
+                {/* Loading */}
+                {sending && (
+                    <div className="animate-fade-in" style={{ display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: 24 }}>
+                        <div style={{
+                            width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            background: 'linear-gradient(135deg, #10b981, #14b8a6)',
+                            boxShadow: '0 2px 8px rgba(16,185,129,0.3)',
+                        }}>
+                            <Bot size={18} style={{ color: '#fff' }} />
+                        </div>
+                        <div style={{ flex: 1 }}>
+                            <div style={{ fontSize: '0.75rem', fontWeight: 600, color: '#10b981', marginBottom: 6 }}>
+                                AuraLab AI Tutor
+                            </div>
+                            <div style={{
+                                background: 'var(--bg-secondary)',
+                                border: '1px solid var(--border-color)',
+                                borderRadius: 16, padding: '16px 20px',
+                                display: 'flex', alignItems: 'center', gap: 10,
+                            }}>
+                                <Loader2 size={16} className="spin" style={{ color: '#10b981' }} />
+                                <span style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
+                                    Analyzing your homework...
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                )}
+                <div ref={chatEndRef} />
+            </div>
+        </div>
+
+        {/* ── Bottom Input Bar ─── */}
+        <div style={{
+            borderTop: '1px solid var(--border-color)',
+            background: 'var(--bg-secondary)',
+            padding: '12px 20px',
+            flexShrink: 0,
+        }}>
+            <div style={{ maxWidth: 780, margin: '0 auto' }}>
+                {/* Image Preview */}
+                {preview && (
+                    <div className="animate-slide-up" style={{
+                        marginBottom: 10, display: 'flex', alignItems: 'center', gap: 10,
+                        padding: '8px 10px', background: 'var(--bg-primary)',
+                        borderRadius: 10, border: '1px solid var(--border-color)',
+                    }}>
+                        <img src={preview} alt="Preview" style={{
+                            width: 56, height: 40, objectFit: 'cover',
+                            borderRadius: 6, border: '1px solid var(--border-color)',
+                        }} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                            <p style={{
+                                fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-primary)',
+                                whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
+                            }}>{image?.name}</p>
+                            <p style={{ fontSize: '0.65rem', color: 'var(--text-muted)' }}>
+                                {(image?.size / 1024).toFixed(1)} KB
+                            </p>
+                        </div>
+                        <button className="btn-ghost" onClick={clearPreview}
+                            style={{ padding: 4, color: '#ef4444', flexShrink: 0 }}>
+                            <X size={14} />
+                        </button>
+                    </div>
+                )}
+                {/* Input Row: Image + Text + Send */}
+                <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                    <input type="file" accept="image/*" ref={fileRef}
+                        onChange={(e) => handleFileSelect(e.target.files[0])}
+                        style={{ display: 'none' }} />
+                    <button onClick={() => !sending && fileRef.current?.click()}
+                        disabled={sending} title="Attach image"
+                        style={{
+                            width: 42, height: 42, borderRadius: 10,
+                            border: preview ? `2px solid ${colors[0]}` : '1px solid var(--border-color)',
+                            background: preview ? `${colors[0]}10` : 'var(--bg-primary)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            cursor: sending ? 'not-allowed' : 'pointer',
+                            flexShrink: 0, transition: 'all 0.2s',
+                            opacity: sending ? 0.5 : 1,
+                            color: preview ? colors[0] : 'var(--text-muted)',
+                        }}>
+                        <ImagePlus size={18} />
+                    </button>
+                    <input ref={inputRef} type="text" value={question}
+                        onChange={(e) => setQuestion(e.target.value)}
+                        onKeyDown={(e) => { if (e.key === 'Enter' && image && !sending) handleSend(); }}
+                        placeholder={image ? "Ask about your homework..." : "Attach an image, then ask..."}
+                        disabled={sending}
+                        style={{
+                            flex: 1, padding: '10px 16px', borderRadius: 10,
+                            border: '1px solid var(--border-color)',
+                            background: 'var(--bg-primary)', color: 'var(--text-primary)',
+                            fontSize: '0.875rem', outline: 'none',
+                            transition: 'border-color 0.2s', opacity: sending ? 0.5 : 1,
+                        }}
+                        onFocus={(e) => e.target.style.borderColor = colors[0]}
+                        onBlur={(e) => e.target.style.borderColor = 'var(--border-color)'}
+                    />
+                    <button className="btn-primary" onClick={handleSend}
+                        disabled={!image || sending}
+                        style={{
+                            width: 42, height: 42, borderRadius: 10,
+                            background: `linear-gradient(135deg, ${colors[0]}, ${colors[1]})`,
+                            opacity: (!image || sending) ? 0.5 : 1,
+                            flexShrink: 0, display: 'flex', alignItems: 'center',
+                            justifyContent: 'center', padding: 0,
+                        }}>
+                        {sending ? <Loader2 size={16} className="spin" /> : <Send size={16} />}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+            </div >
+
+        {/* AI Response Styles */ }
+        < style > {`
                 .ai-response-content {
                     font-size: 0.9rem;
                     line-height: 1.8;
@@ -808,8 +809,8 @@ export default function HomeworkPage() {
                     background: var(--bg-primary);
                     font-weight: 600;
                 }
-            `}</style>
-        </div>
+            `}</style >
+        </div >
     );
 }
 

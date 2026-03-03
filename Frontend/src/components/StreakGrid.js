@@ -88,7 +88,7 @@ export default function StreakGrid() {
     }
 
     return (
-        <div style={{ overflowX: 'auto', padding: '4px 0' }}>
+        <div className="overflow-x-auto w-full pb-2"><div style={{ padding: '4px 0', minWidth: 'max-content' }}>
             <div style={{
                 display: 'flex',
                 flexDirection: 'column',
@@ -160,6 +160,7 @@ export default function StreakGrid() {
                     </div>
                 </div>
             </div>
+        </div>
 
             {/* Legend */}
             <div style={{

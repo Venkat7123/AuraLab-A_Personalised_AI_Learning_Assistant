@@ -121,46 +121,39 @@ export default function Home() {
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', background: 'transparent' }}>
       {/* Navbar */}
-      <nav style={{
-        padding: '12px 24px',
-        margin: '24px auto',
-        width: 'calc(100% - 48px)',
-        maxWidth: 1200,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        zIndex: 50,
-        background: 'var(--glass-bg)',
-        backdropFilter: 'blur(16px)',
-        border: '1px solid var(--glass-border)',
-        borderRadius: 100,
-        boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <img src="/logo.png" alt="AuraLab" style={{ width: 40, height: 40, borderRadius: 10, objectFit: 'cover' }} />
-          <span className="gradient-text" style={{ fontSize: '1.75rem', fontWeight: 800, letterSpacing: '-0.02em' }}>
+      <nav className="flex items-center justify-between fixed z-50 px-3 md:px-6 py-3 w-[calc(100%-24px)] md:w-[calc(100%-48px)] max-w-[1200px]"
+        style={{
+          margin: '12px auto md:24px auto',
+          top: 0,
+          left: 0,
+          right: 0,
+          background: 'var(--glass-bg)',
+          backdropFilter: 'blur(16px)',
+          border: '1px solid var(--glass-border)',
+          borderRadius: 100,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.1)'
+        }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <img src="/logo.png" alt="AuraLab" className="w-8 h-8 md:w-10 md:h-10 rounded-[8px] md:rounded-[10px] object-cover" />
+          <span className="gradient-text text-xl md:text-[1.75rem]" style={{ fontWeight: 800, letterSpacing: '-0.02em' }}>
             AuraLab
           </span>
         </div>
 
-        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           {loading ? (
-            <div className="animate-pulse" style={{ width: 100, height: 40, background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)' }} />
+            <div className="animate-pulse" style={{ width: 100, height: 36, background: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)' }} />
           ) : user ? (
-            <Link href="/dashboard" className="btn-primary" style={{ textDecoration: 'none' }}>
-              Go to Dashboard <ArrowRight size={18} />
+            <Link href="/dashboard" className="btn-primary text-xs md:text-base px-3 py-2 md:px-5 md:py-2.5" style={{ textDecoration: 'none' }}>
+              Dashboard <ArrowRight size={16} />
             </Link>
           ) : (
             <>
-              <Link href="/login" className="btn-secondary" style={{ textDecoration: 'none', padding: '10px 24px' }}>
+              <Link href="/login" className="btn-secondary text-xs md:text-base px-3 py-2 md:px-6 md:py-2.5" style={{ textDecoration: 'none' }}>
                 Log In
               </Link>
-              <Link href="/signup" className="btn-primary" style={{ textDecoration: 'none', padding: '10px 24px' }}>
-                Get Started Free
+              <Link href="/signup" className="btn-primary text-xs md:text-base px-3 py-2 md:px-6 md:py-2.5" style={{ textDecoration: 'none' }}>
+                Free <span className="hidden sm:inline">Start</span>
               </Link>
             </>
           )}

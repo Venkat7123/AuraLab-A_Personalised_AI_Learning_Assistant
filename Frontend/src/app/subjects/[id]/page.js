@@ -576,8 +576,7 @@ export default function SubjectDetailPage() {
                         justifyContent: 'space-between',
                         marginBottom: 24,
                     }}>
-                        <h2 style={{
-                            fontSize: '1.125rem',
+                        <h2 className="text-lg md:text-[1.125rem]" style={{
                             fontWeight: 700,
                             color: 'var(--text-primary)',
                             display: 'flex',
@@ -587,8 +586,7 @@ export default function SubjectDetailPage() {
                             <Sparkles size={20} style={{ color: colors[0] }} />
                             Syllabus
                         </h2>
-                        <span style={{
-                            fontSize: '0.75rem',
+                        <span className="text-[10px] md:text-xs" style={{
                             fontWeight: 600,
                             color: 'var(--text-muted)',
                             background: 'var(--bg-secondary)',
