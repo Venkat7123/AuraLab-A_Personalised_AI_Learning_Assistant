@@ -1,225 +1,316 @@
-# AuraLab - AI-Powered Learning Assistant
+<p align="center">
+  <img src="Frontend/public/logo.png" alt="AuraLab Logo" width="80" height="80" style="border-radius: 16px;" />
+</p>
 
-AuraLab is a full-stack personalized learning platform that uses Gemini 2.5 Flash AI to generate structured syllabi, multi-mode lesson content, quizzes, AI chat tutoring, homework scanning, and AI-generated infographic images - all in your preferred language.
+<h1 align="center">AuraLab — A Personalised AI Learning Assistant</h1>
 
----
+<p align="center">
+  <strong>AI-powered learning platform that generates personalised curriculums, interactive lessons, quizzes, and study materials — tailored to your goals.</strong>
+</p>
 
-## Features
-
-### Subject Management
-- Create subjects with name, goal, study duration, level (Beginner to Expert), and intensity (Casual to Hardcore)
-- Choose study language: **English, Tamil, Telugu, Kannada, Hindi**
-- AI generates a full ordered syllabus automatically, or upload a PDF to extract topics, or build manually with drag-and-drop reordering
-- Delete subjects from the dashboard
-
-### AI-Powered Playground (per topic)
-Five learning modes powered by Gemini 2.5 Flash:
-
-| Mode | Description |
-|---|---|
-| **Explain** | Detailed concept explanation with examples and pro tips |
-| **Demonstrate** | Step-by-step walkthrough with code examples |
-| **Let Me Try** | 3 practice exercises (Basic to Challenge) |
-| **Apply** | Real-world use cases and project challenges |
-| **Test Me** | 10-question MCQ quiz - score 7/10 to unlock next topic |
-
-- Content generated in the user's chosen language using a natural, conversational tone
-- Topics are sequentially locked - pass the quiz to unlock the next
-- Progress tracking per subject (complete count and percentage)
-- Switch language mid-session from the topic bar
-- Download any topic's full content as a formatted **PDF**
-
-### AI Chat Tutor (Right Panel)
-- Context-aware chat scoped to the current topic and subject
-- Maintains conversation history across sessions (thread-based)
-- **Infographic mode** - type a concept and generate an AI visual image (Gemini 2.5 Flash Image) stored in the subject library
-- Rename and manage multiple chat threads per subject
-
-### Homework Scanner
-- Upload a photo of homework (image)
-- Gemini Vision reads and solves the homework with step-by-step explanations
-- Ask follow-up questions about the scanned content
-- Full scan history stored per subject
-
-### Exam Prep
-- Generate a 20-question cross-topic exam covering the entire subject
-- Each question includes an AI-generated explanation of correct and incorrect answers
-- Instant score, results summary, and per-question answer review
-
-### Learning Streak
-- Daily activity tracking - quiz passes record a streak entry
-- GitHub-style heatmap grid on the dashboard showing activity over time
-- Current streak count displayed on the dashboard
-
-### Profile
-- View and edit display name and avatar
-- Email/password auth via Supabase
-
-### Image Library (per subject)
-- All AI-generated infographics stored in Supabase Storage
-- Accessible from the left sidebar library panel alongside scanned images
-- Click any image to open a full-screen lightbox
+<p align="center">
+  <img src="https://img.shields.io/badge/Next.js-16-black?logo=nextdotjs" />
+  <img src="https://img.shields.io/badge/React-19-61DAFB?logo=react" />
+  <img src="https://img.shields.io/badge/Express-5-000000?logo=express" />
+  <img src="https://img.shields.io/badge/Gemini_AI-2.0-4285F4?logo=google" />
+  <img src="https://img.shields.io/badge/Supabase-Auth_%26_DB-3ECF8E?logo=supabase" />
+</p>
 
 ---
 
-## Tech Stack
+## ✨ Features
 
-### Frontend
-| Technology | Purpose |
-|---|---|
-| Next.js 15 (App Router) | React framework |
-| Supabase JS Client | Auth (client-side) |
-| jsPDF | In-browser PDF generation |
-| Lucide React | Icons |
-| CSS Variables | Theming |
+### 🧠 AI-Powered Learning
+- **Custom Syllabus Generation** — Describe what you want to learn and AI generates a structured, topic-by-topic curriculum
+- **4-Mode Content Delivery** — Each topic is taught through 4 modes: *Explain*, *Demonstrate*, *Try*, and *Apply*
+- **AI Chat Tutor** — Chat with an AI tutor that understands your topic context and adapts to your learning style
+- **Smart Quizzes** — Auto-generated quizzes with instant feedback and progress tracking
+- **Exam Preparation** — Generate comprehensive exam questions across all topics in a subject
+- **Infographic Generation** — Create visual infographics from chat conversations using Pollinations.ai
 
-### Backend
-| Technology | Purpose |
-|---|---|
-| Node.js + Express 5 | REST API server |
-| Supabase (Service Role SDK) | Database + Storage |
-| Google Gemini 2.5 Flash | Content, syllabus, quiz, chat, image generation |
-| sharp | Image text overlay compositing |
-| pdf-parse | Extract text from uploaded PDFs |
-| multer | File upload handling |
+### 📄 Document Intelligence
+- **PDF Upload & Analysis** — Upload PDF syllabi and AI extracts structured topics automatically
+- **Homework Scanner** — Scan homework/assignments via image upload and get AI-powered solutions
+- **PDF Export** — Download chat conversations and notes as formatted PDF documents
+
+### 📊 Progress & Engagement
+- **Streak Tracking** — Daily learning streak with a visual heatmap grid (GitHub-style)
+- **Topic Progress** — Track quiz scores and completion across all topics
+- **Onboarding Flow** — Personalised setup wizard that captures learning goals, style, and experience level
+
+### 🔐 Authentication
+- **Email/Password** authentication via Supabase
+- **Google OAuth** integration
+- **Forgot/Reset Password** flow with email verification
+- **Profile Management** — Update display name, change password, delete account
 
 ---
 
-## Project Structure
+## 🏗️ Tech Stack
+
+| Layer | Technology |
+|---|---|
+| **Frontend** | Next.js 16, React 19, Tailwind CSS 4, Lucide Icons |
+| **Backend** | Express 5 (ES Modules), Node.js |
+| **AI Engine** | Google Gemini 2.0 Flash (dual API key rotation with fallback) |
+| **Database** | Supabase (PostgreSQL + Row Level Security) |
+| **Auth** | Supabase Auth (Email/Password + Google OAuth) |
+| **Storage** | Supabase Storage (images, PDFs) |
+| **Image Gen** | HuggingFace API |
+| **PDF Parsing** | pdf-parse |
+| **Image Processing** | Sharp |
+| **PDF Export** | jsPDF |
+
+---
+
+## 📁 Project Structure
 
 ```
-auralab/
-├── Frontend/                     # Next.js app
-│   └── src/
-│       ├── app/
-│       │   ├── dashboard/        # Subject list + streak heatmap
-│       │   ├── add/              # Create subject wizard (3 steps)
-│       │   ├── subjects/[id]/    # Subject detail + exam prep
-│       │   │   ├── playground/   # 3-panel learning interface
-│       │   │   ├── homework/     # Homework scanner
-│       │   │   └── settings/     # Subject settings
-│       │   ├── profile/          # User profile page
-│       │   ├── login/
-│       │   └── signup/
-│       ├── components/
-│       │   ├── playground/
-│       │   │   ├── LeftPanel.js  # Topics syllabus + image library
-│       │   │   ├── CenterPanel.js# Learning modes + quiz
-│       │   │   └── RightPanel.js # AI chat + infographic generation
-│       │   ├── Navbar.js
-│       │   ├── SubjectCard.js
-│       │   └── StreakGrid.js
-│       └── utils/
-│           └── api.js            # Authenticated fetch wrapper
+AuraLab/
+├── Backend/
+│   ├── config/
+│   │   └── supabase.js          # Supabase client (anon + admin)
+│   ├── controllers/             # Route handlers
+│   ├── middleware/
+│   │   └── error.middleware.js   # Global error handler
+│   ├── routes/                  # API route definitions
+│   │   ├── ai.routes.js         # Syllabus generation
+│   │   ├── chat.routes.js       # AI chat
+│   │   ├── content.routes.js    # Topic content & quizzes
+│   │   ├── image.routes.js      # Infographic generation
+│   │   ├── pdf.routes.js        # PDF upload & parsing
+│   │   ├── profile.routes.js    # User profile CRUD
+│   │   ├── scan.routes.js       # Homework scanning
+│   │   ├── streak.routes.js     # Daily streak tracking
+│   │   ├── subject.routes.js    # Subject CRUD
+│   │   └── topic.routes.js      # Topic management
+│   ├── services/                # Business logic
+│   │   ├── ai.service.js        # Gemini AI integration
+│   │   ├── chat.service.js      # Chat history
+│   │   ├── content.service.js   # Content generation & storage
+│   │   ├── image.service.js     # Pollinations integration
+│   │   ├── profile.service.js   # Profile management
+│   │   └── ...                  # Subject, topic, streak, etc.
+│   ├── app.js                   # Express app configuration
+│   └── server.js                # Server entry point
 │
-└── Backend/                      # Express API
-    ├── server.js
-    ├── app.js                    # Route registration + CORS
-    ├── config/supabase.js
-    ├── routes/
-    ├── controllers/
-    ├── services/
-    │   ├── ai.service.js         # Gemini API (syllabus, content, quiz, chat)
-    │   ├── content.service.js    # Topic content generation + storage
-    │   ├── image.service.js      # Gemini image gen + Supabase upload
-    │   ├── chat.service.js       # Chat threads + message history
-    │   ├── scan.service.js       # Homework scan history
-    │   └── streak.service.js     # Daily activity tracking
-    └── middleware/
-        ├── auth.middleware.js    # Supabase JWT verification
-        └── error.middleware.js
+├── Frontend/
+│   ├── public/
+│   │   ├── logo.png             # App logo
+│   │   └── background-tech.mp4  # Background video
+│   ├── src/
+│   │   ├── app/
+│   │   │   ├── page.js          # Landing page
+│   │   │   ├── login/           # Login page
+│   │   │   ├── signup/          # Registration page
+│   │   │   ├── onboarding/      # User preference wizard
+│   │   │   ├── dashboard/       # Main dashboard
+│   │   │   ├── add/             # Create new subject wizard
+│   │   │   ├── profile/         # Profile settings
+│   │   │   ├── subjects/[id]/
+│   │   │   │   ├── page.js      # Subject detail (topics list)
+│   │   │   │   ├── playground/  # Learning playground
+│   │   │   │   ├── homework/    # Homework chat assistant
+│   │   │   │   └── settings/    # Subject configuration
+│   │   │   ├── forgot-password/ # Password reset request
+│   │   │   ├── update-password/ # Password reset confirmation
+│   │   │   ├── globals.css      # Global styles & design tokens
+│   │   │   └── layout.js        # Root layout
+│   │   ├── components/
+│   │   │   ├── Navbar.js        # Navigation bar
+│   │   │   ├── StreakGrid.js    # Streak heatmap
+│   │   │   ├── SubjectCard.js   # Subject card component
+│   │   │   ├── ThemeProvider.js # Dark theme provider
+│   │   │   └── playground/
+│   │   │       ├── LeftPanel.js   # Chat history & library
+│   │   │       ├── CenterPanel.js # Main chat & content area
+│   │   │       └── RightPanel.js  # Notes, quiz & exam prep
+│   │   ├── context/
+│   │   │   ├── AuthContext.js   # Auth state management
+│   │   │   └── SubjectContext.js # Subject state management
+│   │   ├── utils/
+│   │   │   ├── api.js           # API fetch wrapper
+│   │   │   └── generatePdf.js   # Chat-to-PDF conversion
+│   │   └── lib/
+│   │       └── supabase.js      # Frontend Supabase client
+│   └── vercel.json              # Vercel deployment config
+│
+├── .gitignore
+└── README.md
 ```
 
 ---
 
-## API Endpoints
+## 🎯 The Learning Playground
 
-| Method | Endpoint | Description |
-|---|---|---|
-| POST | `/api/ai/generate-syllabus` | AI syllabus generation |
-| POST | `/api/ai/solve-homework` | Homework image solving (Gemini Vision) |
-| POST | `/api/ai/exam` | Generate full subject exam |
-| GET | `/api/subjects` | List user subjects |
-| POST | `/api/subjects` | Create subject |
-| DELETE | `/api/subjects/:id` | Delete subject |
-| GET | `/api/content/:topicId/:mode` | Get topic content for a mode |
-| POST | `/api/content/:topicId/generate` | Trigger AI content generation |
-| GET | `/api/content/:topicId/quiz` | Get quiz questions |
-| POST | `/api/content/:topicId/quiz-result` | Submit quiz result |
-| POST | `/api/topics/:id/pass` | Mark topic as passed |
-| POST | `/api/images/generate` | Generate + store infographic image |
-| GET | `/api/images/:subjectId` | List generated images for a subject |
-| GET | `/api/chat/threads/:subjectId` | Get chat threads |
-| POST | `/api/chat/send` | Send message and get AI reply |
-| GET | `/api/scan/history/:subjectId` | Get homework scan history |
-| GET | `/api/user/streak` | Get streak heatmap data |
-| POST | `/api/user/streak` | Record daily activity |
-| GET | `/api/profile` | Get user profile |
-| PUT | `/api/profile` | Update profile |
+The heart of AuraLab is the **3-panel Playground** — an interactive split-view interface for immersive learning:
+
+| Panel | Purpose |
+|---|---|
+| **Left Panel** | Chat history, search, and generated image library |
+| **Center Panel** | AI chat interface with topic content in 4 modes (Explain → Demonstrate → Try → Apply), infographic generation, and message context |
+| **Right Panel** | Notes editor, quiz mode with instant grading, and exam preparation |
+
+### Content Generation Modes
+1. **Explain** — Detailed concept explanations  
+2. **Demonstrate** — Examples, code samples, real-world applications  
+3. **Try** — Practice exercises and guided challenges  
+4. **Apply** — Real-world projects and application scenarios
 
 ---
 
-## Environment Variables
+## ⚡ Getting Started
 
-### Backend - `Backend/.env`
+### Prerequisites
+- **Node.js** 18+
+- **Supabase** project with the required tables
+- **Google Gemini API** keys (2 recommended for rate-limit rotation)
+- **Pollinations API** key (optional, for infographic generation)
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/Venkat7123/AuraLab-A_Personalised_AI_Learning_Assistant.git
+cd AuraLab-A_Personalised_AI_Learning_Assistant
+```
+
+### 2. Backend Setup
+
+```bash
+cd Backend
+npm install
+```
+
+Create a `.env` file in the `Backend/` directory:
+
 ```env
-PORT=5000
-SUPABASE_URL=your_supabase_url
+# Supabase
+SUPABASE_URL=your_supabase_project_url
 SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
-GEMINI_API_KEY1=your_gemini_key_1
-GEMINI_API_KEY2=your_gemini_key_2_fallback
+SUPABASE_SERVICE_KEY=your_supabase_service_role_key
+
+# Google Gemini AI (2 keys for rate-limit rotation)
+GEMINI_API_KEY1=your_gemini_api_key_1
+GEMINI_API_KEY2=your_gemini_api_key_2
+
+# Pollinations (optional — for infographic generation)
+HUGGING_FACE_TOKEN=your_hugging_face_token
+
+# Server
+PORT=5000
 ```
 
-> Never commit `.env` to version control. It is already listed in `.gitignore`.
+Start the backend:
 
-### Frontend - `Frontend/.env.local`
+```bash
+npm run dev
+```
+
+### 3. Frontend Setup
+
+```bash
+cd Frontend
+npm install
+```
+
+Create a `.env.local` file in the `Frontend/` directory:
+
 ```env
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
 NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 NEXT_PUBLIC_API_URL=http://localhost:5000
 ```
 
----
+Start the frontend:
 
-## Getting Started
-
-### Prerequisites
-- Node.js 18+
-- A [Supabase](https://supabase.com) project
-- [Google AI Studio](https://aistudio.google.com/app/apikey) API key (Gemini 2.5 Flash)
-
-### 1. Run the Backend
 ```bash
-cd Backend
-npm install
-npm run dev        # http://localhost:5000
+npm run dev
 ```
 
-### 2. Run the Frontend
-```bash
-cd Frontend
-npm install
-npm run dev        # http://localhost:3000
-```
+The app will be available at **http://localhost:3000**
 
 ---
 
-## Supabase Setup
+## 🗄️ Database Schema (Supabase)
 
-### Database Tables
-| Table | Purpose |
+The following tables are required in your Supabase project:
+
+| Table | Description |
 |---|---|
-| `user_profiles` | Display name, avatar URL, streak JSON |
-| `subjects` | Subject metadata (name, language, duration, etc.) |
-| `topics` | Topic list + `passed` status per subject |
-| `topic_contents` | AI content keyed by `(topic_id, mode, lang)` |
-| `quiz_questions` | MCQ questions per topic + language |
-| `chat_threads` | Chat thread metadata per subject |
-| `chat_messages` | Individual chat messages |
-| `scan_history` | Homework scan entries (image URL + extracted text) |
-| `generated_images` | Infographic metadata (prompt, image URL, topic) |
-| `exam_questions` | Generated exam questions per subject |
+| `subjects` | User-created subjects with name, goal, language, duration, level, intensity |
+| `topics` | Ordered topics within a subject |
+| `topic_contents` | AI-generated content per topic per mode (explain/demonstrate/try/apply) |
+| `quiz_questions` | Auto-generated quiz questions per topic |
+| `user_topic_progress` | Quiz scores and completion status |
+| `chat_histories` | Saved chat conversations |
+| `chat_messages` | Individual chat messages within histories |
+| `user_streak` | Daily activity tracking for streak calculation |
+| `user_preferences` | Onboarding preferences (role, goal, level, time, style) |
+| `generated_images` | Metadata for AI-generated infographics |
 
-### Storage
-- Bucket: `images` (public) - stores AI-generated infographic images
+---
+
+## 🌐 API Endpoints
+
+### AI & Content
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/api/ai/generate-syllabus` | Generate AI-powered syllabus |
+| `GET` | `/api/content/:topicId/:mode` | Get topic content by mode |
+| `GET` | `/api/content/:topicId/quiz` | Get quiz questions |
+| `POST` | `/api/content/:topicId/quiz/submit` | Submit quiz results |
+| `GET` | `/api/content/:subjectId/exam` | Generate exam questions |
+
+### Chat
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/api/chat/send` | Send message to AI tutor |
+| `GET` | `/api/chat/histories/:subjectId` | Get chat histories |
+| `POST` | `/api/chat/histories` | Create new chat history |
+
+### Subjects & Topics
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/subjects` | List all subjects |
+| `POST` | `/api/subjects` | Create new subject |
+| `DELETE` | `/api/subjects/:id` | Delete subject |
+| `PUT` | `/api/subjects/:id/reset` | Reset subject with new config |
+
+### Images & Documents
+| Method | Endpoint | Description |
+|---|---|---|
+| `POST` | `/api/images/generate` | Generate infographic |
+| `POST` | `/api/pdf/upload-pdf` | Upload and parse PDF |
+| `POST` | `/api/scan/solve` | Scan and solve homework |
+
+### User
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/user/streak` | Get streak data |
+| `GET` | `/api/profile` | Get user profile |
+| `PUT` | `/api/profile/name` | Update display name |
+| `DELETE` | `/api/profile/account` | Delete account |
+
+---
+
+## 🚀 Deployment
+
+### Frontend (Vercel)
+The frontend includes a `vercel.json` configured for Next.js. Deploy by connecting your GitHub repo to [Vercel](https://vercel.com).
+
+### Backend
+Deploy the Express backend to any Node.js hosting platform (Railway, Render, Fly.io, etc.). Make sure to set all environment variables from the `.env` section above.
+
+> **Important:** Update the CORS origin in `Backend/app.js` from `http://localhost:3000` to your production frontend URL.
+
+---
+
+## 📄 License
+
+This project is licensed under the ISC License.
+
+---
+
+<p align="center">
+  Built with ❤️ by <a href="https://github.com/Venkat7123">Venkat</a>
+</p>
