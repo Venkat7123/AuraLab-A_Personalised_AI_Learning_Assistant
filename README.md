@@ -165,7 +165,6 @@ The heart of AuraLab is the **3-panel Playground** — an interactive split-view
 - **Node.js** 18+
 - **Supabase** project with the required tables
 - **Google Gemini API** keys (2 recommended for rate-limit rotation)
-- **Pollinations API** key (optional, for infographic generation)
 
 ### 1. Clone the Repository
 
