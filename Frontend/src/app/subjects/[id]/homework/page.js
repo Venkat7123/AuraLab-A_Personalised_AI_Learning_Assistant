@@ -319,8 +319,7 @@ export default function HomeworkPage() {
                     overflow: 'hidden',
                     flexShrink: 0,
                 }}>
-                    {/* Sidebar Header */}
-
+                    
                     {/* New Chat Button */}
                     <div style={{ padding: '12px 12px 4px' }}>
                         <button onClick={handleNewChat} style={{
