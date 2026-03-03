@@ -34,7 +34,7 @@ function VideoBg() {
                     objectFit: 'cover',
                 }}
             >
-                <source src="/background-tech.mp4" type="video/mp4" />
+                <source src="https://videos.pexels.com/video-files/9665235/9665235-uhd_2560_1440_30fps.mp4" type="video/mp4" />
             </video>
         </div>
     );
